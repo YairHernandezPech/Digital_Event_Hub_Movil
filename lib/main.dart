@@ -1,5 +1,6 @@
 import 'package:digital_event_hub/sesion/login/login.dart';
 import 'package:digital_event_hub/theme/theme.dart';
+import 'package:digital_event_hub/widgets/Splash.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:provider/provider.dart';
@@ -17,7 +18,25 @@ void main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool _showSplash = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Mostrar el SplashScreen por 3 segundos.
+    Future.delayed(const Duration(seconds: 4), () {
+      setState(() {
+        _showSplash = false;
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ThemeNotifier>(
@@ -25,25 +44,9 @@ class MyApp extends StatelessWidget {
         return MaterialApp(
           theme: theme.currentTheme,
           debugShowCheckedModeBanner: false,
-          home: SignInScreen(),
+          home: _showSplash ? SplashScreen() : SignInScreen(), // Mostrar SplashScreen primero, luego SignInScreen
         );
       },
     );
   }
 }
-// import 'package:digital_event_hub/sesion/login/login.dart';
-// import 'package:flutter/material.dart';
-
-// void main() => runApp(const MyApp());
-
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       debugShowCheckedModeBanner: false,
-//       home: SignInScreen(),
-//     );
-//   }
-// }
