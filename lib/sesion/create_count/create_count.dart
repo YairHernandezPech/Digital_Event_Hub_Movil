@@ -1,152 +1,243 @@
 import 'package:digital_event_hub/sesion/create_count/ApiServiceCount.dart';
 import 'package:digital_event_hub/sesion/login/login.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class CreateCount extends StatefulWidget {
   @override
-  _CreateCountState createState() => _CreateCountState();
+  State<CreateCount> createState() => _CreateCountState();
 }
 
 class _CreateCountState extends State<CreateCount> {
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _lastNameController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
+  bool _isObscured = true;
+
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController lastNameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
 
   final ApiServiceCount _apiServiceCount = ApiServiceCount();
 
+  void _togglePasswordVisibility() {
+    setState(() {
+      _isObscured = !_isObscured;
+    });
+  }
+
   void _register(BuildContext context) async {
     final Map<String, dynamic> data = {
-      'nombre': _nameController.text,
-      'email': _emailController.text,
-      'last_name': _lastNameController.text,
-      'contrasena': _passwordController.text,
-      'telefono': _phoneController.text,
+      'nombre': nameController.text,
+      'email': emailController.text,
+      'last_name': lastNameController.text,
+      'contrasena': passwordController.text,
+      'telefono': phoneController.text,
       'rol_id': 2,
     };
 
     try {
       await _apiServiceCount.register(data);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Center(child: Text('Cuenta creada exitosamente'))),
+        const SnackBar(content: Text('Cuenta creada exitosamente')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Center(
-                child: Text('Error al crear la cuenta, intente de nuevo'))),
+        const SnackBar(
+          content: Text('Error al crear la cuenta, intente de nuevo'),
+        ),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    Size size = MediaQuery.of(context).size;
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Center(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset(
-                  'assets/logo.jpg',
-                  height: 70,
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {},
-                    child: const Text(
-                      'Crear cuenta',
-                      textAlign: TextAlign.right,
-                      style: TextStyle(
-                        color: Color.fromARGB(255, 137, 64, 255),
+      resizeToAvoidBottomInset: false,
+      body: Stack(
+        children: <Widget>[
+          Positioned(
+            top: 0,
+            left: 0,
+            child: ColorFiltered(
+              colorFilter:
+                  const ColorFilter.mode(Colors.purple, BlendMode.srcATop),
+              child: Image.asset(
+                'assets/main_top.png',
+                width: size.width * 0.37,
+              ),
+            ),
+          ),
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ColorFiltered(
+                    colorFilter: const ColorFilter.mode(
+                        Color(0xFF6F35A5), BlendMode.srcATop),
+                    child: Image.asset(
+                      'assets/LOGO HUB BLANCO 1.png',
+                      fit: BoxFit.cover,
+                      width: 200,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  buildTextField(
+                    nameController,
+                    'Nombre:',
+                    const Icon(Icons.person, color: Color(0xFF6F35A5)),
+                  ),
+                  const SizedBox(height: 10),
+                  buildTextField(
+                    lastNameController,
+                    'Apellido:',
+                    const Icon(Icons.person, color: Color(0xFF6F35A5)),
+                  ),
+                  const SizedBox(height: 10),
+                  buildTextField(
+                    emailController,
+                    'Correo Electrónico:',
+                    const Icon(Icons.email, color: Color(0xFF6F35A5)),
+                  ),
+                  const SizedBox(height: 10),
+                  buildTextField(
+                    phoneController,
+                    'Teléfono:',
+                    const Icon(Icons.phone, color: Color(0xFF6F35A5)),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: 325,
+                    child: TextField(
+                      controller: passwordController,
+                      obscureText: _isObscured,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: const Color.fromARGB(255, 234, 219, 252),
+                        labelText: 'Contraseña:',
+                        labelStyle: GoogleFonts.openSans(
+                          color: const Color.fromARGB(255, 86, 86, 86),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        prefixIcon:
+                            const Icon(Icons.lock, color: Color(0xFF6F35A5)),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _isObscured
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                            color: const Color(0xFF6F35A5),
+                          ),
+                          onPressed: _togglePasswordVisibility,
+                        ),
+                        enabledBorder: const OutlineInputBorder(
+                          borderSide: BorderSide.none,
+                          borderRadius: BorderRadius.all(Radius.circular(15)),
+                        ),
+                        border: const OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(15)),
+                        ),
                       ),
                     ),
                   ),
-                ),
-                TextField(
-                  controller: _nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Nombre',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30.0),
+                  const SizedBox(height: 20),
+                  GestureDetector(
+                    onTap: () => _register(context),
+                    child: Container(
+                      width: 250,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            Colors.purple,
+                            Colors.deepPurple,
+                            Colors.purpleAccent,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(15.0),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Registrar',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.openSans(
+                              color: Colors.white,
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: _lastNameController,
-                  decoration: InputDecoration(
-                    labelText: 'Apellidos',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30.0),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: _emailController,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30.0),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: _phoneController,
-                  decoration: InputDecoration(
-                    labelText: 'Telefono',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30.0),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: _passwordController,
-                  decoration: InputDecoration(
-                    labelText: 'Contraseña',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30.0),
-                    ),
-                  ),
-                  obscureText: true,
-                ),
-                const SizedBox(height: 30),
-                GradientButton(
-                  text: 'Crear cuenta',
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color.fromARGB(255, 153, 0, 255),
-                      Color.fromARGB(255, 218, 163, 255)
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "¿Ya tienes una cuenta?",
+                        style: GoogleFonts.openSans(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => SignInScreen()),
+                          );
+                        },
+                        child: Text(
+                          "Inicia sesión",
+                          style: GoogleFonts.openSans(
+                            fontSize: 16,
+                            color: Color(0xFF6F35A5),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
-                  onPressed: () => _register(context),
-                ),
-                const SizedBox(height: 10),
-                GradientButton(
-                  text: 'Ya tengo una cuenta',
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color.fromARGB(255, 153, 0, 255),
-                      Color.fromARGB(255, 218, 163, 255)
-                    ],
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => SignInScreen()));
-                  },
-                ),
-              ],
+                ],
+              ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildTextField(TextEditingController controller, String labelText, Icon icon) {
+    return SizedBox(
+      width: 325,
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: const Color.fromARGB(255, 234, 219, 252),
+          labelText: labelText,
+          labelStyle: GoogleFonts.openSans(
+            color: const Color.fromARGB(255, 86, 86, 86),
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+          prefixIcon: icon,
+          enabledBorder: const OutlineInputBorder(
+            borderSide: BorderSide.none,
+            borderRadius: BorderRadius.all(Radius.circular(15)),
+          ),
+          border: const OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(15)),
           ),
         ),
       ),
