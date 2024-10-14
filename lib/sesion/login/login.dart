@@ -3,12 +3,24 @@ import 'package:digital_event_hub/sesion/create_count/create_count.dart';
 import 'package:digital_event_hub/sesion/login/ApiServiceLogin.dart';
 import 'package:digital_event_hub/sesion/recover_pass/confirm_email.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-class SignInScreen extends StatelessWidget {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+class SignInScreen extends StatefulWidget {
+  @override
+  State<SignInScreen> createState() => _SignInScreenState();
+}
 
+class _SignInScreenState extends State<SignInScreen> {
+  bool _isObscured = true;
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   final ApiServiceLogin _apiServiceLogin = ApiServiceLogin();
+
+  void _togglePasswordVisibility() {
+    setState(() {
+      _isObscured = !_isObscured;
+    });
+  }
 
   void _login(BuildContext context) async {
     final Map<String, dynamic> data = {
@@ -24,141 +36,267 @@ class SignInScreen extends StatelessWidget {
           MaterialPageRoute(builder: (context) => EventsList()),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Center(child: Text('Error al iniciar sesión'))),
-        );
+        _showCustomDialog(context, 'Error', 'Error al iniciar sesión');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Center(child: Text('Error al iniciar sesión'))),
-      );
+      _showCustomDialog(context, 'Error', 'Error al iniciar sesión');
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color.fromARGB(255, 255, 255, 255),
-      body: Center(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset(
-                  'assets/logo.jpg', // Asegúrate de tener el logo en la carpeta assets
-                  height: 250,
-                ),
-                SizedBox(height: 20),
-                TextField(
-                  controller: _emailController,
-                  decoration: InputDecoration(
-                    labelText: 'Correo o username...',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30.0),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 10),
-                TextField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: 'Contraseña...',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30.0),
-                    ),
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => ConfirmEmail()),
-                      );
-                    },
-                    child: Text(
-                      'Olvidé mi contraseña',
-                      style: TextStyle(color: Colors.pinkAccent),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 0),
-                GradientButton(
-                  text: 'Ingresar',
-                  gradient: LinearGradient(
-                    colors: [
-                      Color.fromARGB(255, 212, 172, 255),
-                      Color.fromARGB(255, 162, 0, 255),
-                    ],
-                  ),
-                  onPressed: () => _login(context),
-                ),
-                SizedBox(height: 10),
-                GradientButton(
-                  text: 'Crear Cuenta',
-                  gradient: LinearGradient(
-                    colors: [
-                      Color.fromARGB(255, 153, 0, 255),
-                      Color.fromARGB(255, 218, 163, 255),
-                    ],
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => CreateCount()),
-                    );
-                  },
-                ),
-
-              ],
+  void _showCustomDialog(BuildContext context, String title, String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        backgroundColor: Colors.white,
+        title: Row(
+          children: [
+            Icon(Icons.error_outline, color: Colors.red),
+            SizedBox(width: 10),
+            Text(
+              title,
+              style: GoogleFonts.openSans(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
+          ],
+        ),
+        content: Text(
+          message,
+          style: GoogleFonts.openSans(
+            color: Colors.black87,
+            fontSize: 14,
           ),
         ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+            },
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            child: Text(
+              'Aceptar',
+              style: GoogleFonts.openSans(
+                color: Color(0xFF6F35A5),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
-}
-
-class GradientButton extends StatelessWidget {
-  final String text;
-  final Gradient gradient;
-  final VoidCallback onPressed;
-
-  const GradientButton({
-    Key? key,
-    required this.text,
-    required this.gradient,
-    required this.onPressed,
-  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: gradient,
-        borderRadius: BorderRadius.circular(30.0),
-      ),
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30.0),
+    Size size = MediaQuery.of(context).size;
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: false,
+      body: Stack(
+        children: <Widget>[
+          Positioned(
+            top: 0,
+            left: 0,
+            child: ColorFiltered(
+              colorFilter:
+                  const ColorFilter.mode(Colors.purple, BlendMode.srcATop),
+              child: Image.asset(
+                'assets/main_top.png',
+                width: size.width * 0.37,
+              ),
+            ),
           ),
-        ),
-        onPressed: onPressed,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 15.0),
-          child: Text(
-            text,
-            style: TextStyle(fontSize: 18, color: Colors.white),
+          Center(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ColorFiltered(
+                      colorFilter: const ColorFilter.mode(
+                          Color(0xFF6F35A5), BlendMode.srcATop),
+                      child: Image.asset(
+                        'assets/LOGO HUB BLANCO 1.png',
+                        fit: BoxFit.cover,
+                        width: 200,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      "¡Bienvenido!",
+                      style: GoogleFonts.openSans(
+                          fontSize: 23,
+                          fontWeight: FontWeight.bold,
+                          color: Color.fromARGB(255, 70, 70, 70)),
+                    ),
+                    const SizedBox(height: 15),
+                    SizedBox(
+                      width: 325,
+                      child: TextField(
+                        controller: _emailController,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: const Color.fromARGB(255, 234, 219, 252),
+                          labelText: 'Correo Electrónico:',
+                          labelStyle: GoogleFonts.openSans(
+                              color: const Color.fromARGB(255, 86, 86, 86),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold),
+                          prefixIcon: const Icon(Icons.person,
+                              color: Color(0xFF6F35A5)),
+                          enabledBorder: const OutlineInputBorder(
+                              borderSide: BorderSide.none,
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(15))),
+                          border: const OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(15))),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: 325,
+                      child: TextField(
+                        controller: _passwordController,
+                        obscureText: _isObscured,
+                        decoration: InputDecoration(
+                          prefixIcon:
+                              const Icon(Icons.lock, color: Color(0xFF6F35A5)),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _isObscured
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                              color: const Color(0xFF6F35A5),
+                            ),
+                            onPressed: _togglePasswordVisibility,
+                          ),
+                          filled: true,
+                          fillColor: const Color.fromARGB(255, 234, 219, 252),
+                          labelText: 'Contraseña:',
+                          labelStyle: GoogleFonts.openSans(
+                              color: const Color.fromARGB(255, 86, 86, 86),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold),
+                          enabledBorder: const OutlineInputBorder(
+                              borderSide: BorderSide.none,
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(15))),
+                          border: const OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(15))),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    GestureDetector(
+                      onTap: () => _login(context),
+                      child: Container(
+                        width: 250,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              Colors.purple,
+                              Colors.deepPurple,
+                              Colors.purpleAccent
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(15.0),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Iniciar Sesión',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.openSans(
+                                color: Colors.white,
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '¿Olvidaste tu contraseña?',
+                          style: GoogleFonts.openSans(
+                              fontSize: 15, fontWeight: FontWeight.w500),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ConfirmEmail(),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            'Restablecer',
+                            style: GoogleFonts.openSans(
+                                fontSize: 16,
+                                color: Colors.deepPurple,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 15),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => CreateCount()),
+                        );
+                      },
+                      child: Container(
+                        width: 250,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(color: Colors.deepPurple, width: 2),
+                          color: Colors.white,
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Crear Cuenta',
+                            style: GoogleFonts.openSans(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.deepPurple),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
