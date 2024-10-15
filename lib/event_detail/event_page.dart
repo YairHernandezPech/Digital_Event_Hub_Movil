@@ -2,6 +2,7 @@ import 'dart:ui'; // Importa ImageFilter para aplicar el filtro de desenfoque
 import 'package:digital_event_hub/escenarios/escenario1.dart'; //<-------------------- Importa la clase Escenario1
 import 'package:digital_event_hub/event_detail/comentarios.dart'; // Asegúrate de que la ruta es correcta
 import 'package:digital_event_hub/home/eventsList.dart';
+import 'package:digital_event_hub/qr_page/qrcode_page.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:digital_event_hub/event_detail/ApiServiceEvent.dart';
@@ -255,11 +256,7 @@ class _EventPageState extends State<EventPage> with TickerProviderStateMixin {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => Escenario1(
-                        id: id,
-                        monto:
-                            event != null ? double.parse(event!['monto']) : 0.0,
-                      ), // Pasar el id //<-------------------- Modificado
+                      builder: (context) => QrcodePage(imageUrl: event!['imagen_url']) // Pasar el id //<-------------------- Modificado
                     ),
                   );
                 },
@@ -275,9 +272,7 @@ class _EventPageState extends State<EventPage> with TickerProviderStateMixin {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      event != null
-                          ? '\$${event!['monto'] ?? '00.00'}'
-                          : '00.00',
+                      "Comprar",
                       style: TextStyle(fontSize: 16, color: Colors.white),
                     ),
                     // SizedBox(width: 20),
