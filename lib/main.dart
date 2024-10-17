@@ -1,22 +1,29 @@
-import 'package:digital_event_hub/home/eventsList.dart';
-import 'package:digital_event_hub/sesion/login/login.dart';
-import 'package:digital_event_hub/theme/theme.dart';
-import 'package:digital_event_hub/widgets/Splash.dart';
+import 'package:digital_event_hub/sesion/login/ApiServiceLogin.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:provider/provider.dart';
-import 'package:digital_event_hub/sesion/login/ApiServiceLogin.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'theme/theme.dart';
+import 'home/eventsList.dart';
+import 'sesion/login/login.dart';
+import 'widgets/Splash.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inicializar Stripe si es necesario
+  // Cargar el tema guardado al iniciar la aplicación
+  final prefs = await SharedPreferences.getInstance();
+  int themeIndex = prefs.getInt('selectedTheme') ?? 0;
+
+  // Lista de temas disponibles
+  List<ThemeData> themes = [theme1, theme2, theme3, theme4];
+  ThemeData initialTheme = themes[themeIndex];
+
   Stripe.publishableKey =
       "pk_test_51PXQwjRvOexYqm868BaEds2SOFXYVM32nhnnBCKNUvDiyf14mBpHoFETJYJ7kdLPrQ2VuXHLp5hwgJsHMlYCl6x400OGvYJj9h";
-
   runApp(
     ChangeNotifierProvider(
-      create: (_) => ThemeNotifier(theme1),
+      create: (_) => ThemeNotifier(initialTheme),
       child: MyApp(),
     ),
   );
@@ -38,7 +45,6 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     _checkUserLoginStatus();
 
-    // Mostrar el SplashScreen por 3 segundos.
     Future.delayed(const Duration(seconds: 4), () {
       setState(() {
         _showSplash = false;
@@ -46,26 +52,25 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  // Método para verificar si el usuario está logueado
   void _checkUserLoginStatus() async {
     bool isLoggedIn = await ApiServiceLogin().isUserLoggedIn();
+    // Simular verificación del inicio de sesión del usuario
     setState(() {
       _isLoggedIn = isLoggedIn;
+      _isLoggedIn = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<ThemeNotifier>(
-      builder: (context, theme, child) {
+      builder: (context, themeNotifier, child) {
         return MaterialApp(
-          theme: theme.currentTheme,
+          theme: themeNotifier.currentTheme,
           debugShowCheckedModeBanner: false,
           home: _showSplash
               ? SplashScreen()
-              : (_isLoggedIn
-                  ? EventsList()
-                  : SignInScreen()), // Si el usuario está logueado, muestra la pantalla principal; de lo contrario, la de inicio de sesión
+              : (_isLoggedIn ? EventsList() : SignInScreen()),
         );
       },
     );

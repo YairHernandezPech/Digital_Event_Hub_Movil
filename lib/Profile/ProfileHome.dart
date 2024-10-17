@@ -10,7 +10,8 @@ import 'package:skeletonizer/skeletonizer.dart';
 import 'dart:io';
 
 class ProfileHome extends StatefulWidget {
-  const ProfileHome({super.key});
+  final List<ThemeData> themes = [theme1, theme2, theme3, theme4];
+  ProfileHome({super.key});
 
   @override
   _ProfileHomeState createState() => _ProfileHomeState();
@@ -219,7 +220,7 @@ class _ProfileHomeState extends State<ProfileHome> {
                                 onTap: () {
                                   Provider.of<ThemeNotifier>(context,
                                           listen: false)
-                                      .setTheme(themes[index]);
+                                      .setTheme(themes[index], index);
                                   setState(() {
                                     selectedIndex =
                                         index; // Actualiza el índice seleccionado
