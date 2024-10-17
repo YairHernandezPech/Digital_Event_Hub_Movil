@@ -1,11 +1,16 @@
+import 'dart:convert';
 import 'package:digital_event_hub/home/eventsList.dart';
 import 'package:digital_event_hub/sesion/create_count/create_count.dart';
 import 'package:digital_event_hub/sesion/login/ApiServiceLogin.dart';
 import 'package:digital_event_hub/sesion/recover_pass/confirm_email.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class SignInScreen extends StatefulWidget {
+  const SignInScreen({super.key});
+
   @override
   State<SignInScreen> createState() => _SignInScreenState();
 }
@@ -16,12 +21,34 @@ class _SignInScreenState extends State<SignInScreen> {
   final _passwordController = TextEditingController();
   final ApiServiceLogin _apiServiceLogin = ApiServiceLogin();
 
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus(); // Verificar si ya hay un token guardado
+  }
+
+  // Verificar si el usuario ya tiene una sesión activa
+  void _checkLoginStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+
+    if (token != null && !JwtDecoder.isExpired(token)) {
+      // Si el token existe y no ha expirado, redirigir a la página de eventos
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => EventsList()),
+      );
+    }
+  }
+
+  // Alternar visibilidad de la contraseña
   void _togglePasswordVisibility() {
     setState(() {
       _isObscured = !_isObscured;
     });
   }
 
+  // Iniciar sesión
   void _login(BuildContext context) async {
     final Map<String, dynamic> data = {
       'email': _emailController.text,
@@ -31,7 +58,14 @@ class _SignInScreenState extends State<SignInScreen> {
     try {
       final response = await _apiServiceLogin.login(data);
       if (response.containsKey('token')) {
-        Navigator.push(
+        String token = response['token'];
+
+        // Guardar el token en SharedPreferences
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', token);
+
+        // Navegar a la página de eventos
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => EventsList()),
         );
@@ -43,6 +77,7 @@ class _SignInScreenState extends State<SignInScreen> {
     }
   }
 
+  // Mostrar dialogo de error
   void _showCustomDialog(BuildContext context, String title, String message) {
     showDialog(
       context: context,
@@ -275,22 +310,28 @@ class _SignInScreenState extends State<SignInScreen> {
                         width: 250,
                         height: 50,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15),
-                          border: Border.all(color: Colors.deepPurple, width: 2),
-                          color: Colors.white,
+                          gradient: const LinearGradient(
+                            colors: [
+                              Colors.deepPurpleAccent,
+                              Colors.deepPurple,
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(15.0),
                         ),
                         child: Center(
                           child: Text(
                             'Crear Cuenta',
                             style: GoogleFonts.openSans(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.deepPurple),
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 15),
                   ],
                 ),
               ),

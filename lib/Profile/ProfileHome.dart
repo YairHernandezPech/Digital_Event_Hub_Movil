@@ -1,5 +1,6 @@
 import 'package:digital_event_hub/Profile/ApiServiceProfile.dart';
 import 'package:digital_event_hub/Profile/ProfileEdit.dart';
+import 'package:digital_event_hub/home/eventsList.dart';
 import 'package:digital_event_hub/sesion/login/login.dart';
 import 'package:digital_event_hub/theme/theme.dart';
 import 'package:flutter/material.dart';
@@ -9,13 +10,14 @@ import 'package:skeletonizer/skeletonizer.dart';
 import 'dart:io';
 
 class ProfileHome extends StatefulWidget {
+  const ProfileHome({super.key});
+
   @override
   _ProfileHomeState createState() => _ProfileHomeState();
 }
 
 class _ProfileHomeState extends State<ProfileHome> {
   int selectedIndex = -1; // Índice del tema seleccionado
-
   ApiServiceProfile apiService = ApiServiceProfile();
   Map<String, dynamic>? userData;
   bool isLoading = true;
@@ -26,7 +28,17 @@ class _ProfileHomeState extends State<ProfileHome> {
     fetchData();
   }
 
+  // Este método asegura que los datos del perfil se recarguen cada vez que se muestra la pantalla
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    fetchData(); // Recarga los datos del perfil cuando se entra a la pantalla
+  }
+
   void fetchData() async {
+    setState(() {
+      isLoading = true; // Mostrar el estado de carga
+    });
     try {
       final data = await apiService.fetchUserData();
       setState(() {
@@ -50,6 +62,15 @@ class _ProfileHomeState extends State<ProfileHome> {
         title: const Text(''),
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.white),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => EventsList()),
+            );
+          },
+        ),
       ),
       body: Skeletonizer(
         enabled: isLoading,
@@ -89,7 +110,8 @@ class _ProfileHomeState extends State<ProfileHome> {
                               ? (userData!['fotoPerfil'].startsWith('http')
                                   ? NetworkImage(userData!['fotoPerfil'])
                                   : FileImage(File(userData!['fotoPerfil'])))
-                              : AssetImage('assets/profile.png') as ImageProvider,
+                              : AssetImage('assets/profile.png')
+                                  as ImageProvider,
                         ),
                       ],
                     ),
@@ -135,8 +157,7 @@ class _ProfileHomeState extends State<ProfileHome> {
                         ),
                         child: const Text(
                           'Editar Perfil',
-                          style: TextStyle(
-                              color: Colors.white, fontSize: 25.0),
+                          style: TextStyle(color: Colors.white, fontSize: 25.0),
                         ),
                       ),
                       const SizedBox(height: 42.0),
@@ -225,30 +246,36 @@ class _ProfileHomeState extends State<ProfileHome> {
                         }),
                       ),
                       const SizedBox(height: 83.0),
-ElevatedButton(
-  onPressed: () async {
-    // Eliminar los datos de la sesión (ejemplo usando SharedPreferences)
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); // Esto elimina todos los datos almacenados
+                      ElevatedButton(
+                        onPressed: () async {
+                          // Eliminar los datos de la sesión (ejemplo usando SharedPreferences)
+                          SharedPreferences prefs =
+                              await SharedPreferences.getInstance();
+                          await prefs
+                              .clear(); // Esto elimina todos los datos almacenados
 
-    // Navegar a la pantalla de inicio de sesión y eliminar todas las pantallas anteriores
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => SignInScreen()),
-      (Route<dynamic> route) => false, // Elimina todas las rutas anteriores
-    );
-  },
-  style: ElevatedButton.styleFrom(
-    backgroundColor: Theme.of(context).colorScheme.tertiary,
-    padding: const EdgeInsets.symmetric(horizontal: 90, vertical: 8),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(10),
-    ),
-  ),
-  child: const Text(
-    'Cerrar sesión',
-    style: TextStyle(color: Colors.white, fontSize: 25.0),
-  ),
-),
+                          // Navegar a la pantalla de inicio de sesión y eliminar todas las pantallas anteriores
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                                builder: (context) => SignInScreen()),
+                            (Route<dynamic> route) =>
+                                false, // Elimina todas las rutas anteriores
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              Theme.of(context).colorScheme.tertiary,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 90, vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          'Cerrar sesión',
+                          style: TextStyle(color: Colors.white, fontSize: 25.0),
+                        ),
+                      ),
                     ],
                   ),
                 ),

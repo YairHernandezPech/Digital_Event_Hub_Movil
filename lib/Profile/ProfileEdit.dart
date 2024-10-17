@@ -7,6 +7,8 @@ import 'ApiServiceProfile.dart';
 import 'ProfileHome.dart';
 
 class ProfileEdith extends StatefulWidget {
+  const ProfileEdith({super.key});
+
   @override
   _ProfileEdithState createState() => _ProfileEdithState();
 }
@@ -54,7 +56,8 @@ class _ProfileEdithState extends State<ProfileEdith> {
         _nameController.text = userData['nombre'];
         _emailController.text = userData['email'];
         _phoneController.text = userData['telefono'];
-        _imageUrl = userData['fotoPerfil']; // Asigna la URL de la imagen existente
+        _imageUrl =
+            userData['fotoPerfil']; // Asigna la URL de la imagen existente
         _isLoading = false;
       });
     } catch (e) {
@@ -229,7 +232,8 @@ class _ProfileEdithState extends State<ProfileEdith> {
                       _buildProfileTextField(
                           Icons.phone, '+52(999)929737', _phoneController),
                       const SizedBox(height: 20),
-                      _buildProfileTextField(Icons.lock, '*************', _contrasenaController,
+                      _buildProfileTextField(
+                          Icons.lock, '*************', _contrasenaController,
                           obscureText: false),
                       const Spacer(flex: 3),
                     ],
@@ -293,21 +297,25 @@ class _ProfileEdithState extends State<ProfileEdith> {
       children: [
         Container(
           padding: const EdgeInsets.all(2.0),
-          child: Icon(icon, color: Colors.grey),
+          child: Icon(icon, color: Color(0xFFB5B5B5)), // Icono negro
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 15),
         Expanded(
           child: TextField(
             controller: controller,
             obscureText: obscureText,
             textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.black), // Texto en negro
             decoration: InputDecoration(
               hintText: hintText,
+              hintStyle: TextStyle(
+                  color: Colors.black54), // Texto placeholder en gris oscuro
               filled: true,
-              fillColor: Colors.grey.shade200,
+              fillColor: Colors.white, // Fondo blanco
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide.none,
+                borderSide: const BorderSide(
+                    color: Color(0xFFD2D2D2)), // Borde color D2D2D2
               ),
               contentPadding: const EdgeInsets.symmetric(vertical: 20),
             ),
