@@ -9,13 +9,11 @@ import 'package:qr_flutter/qr_flutter.dart';
 class QrcodePage extends StatefulWidget {
   final String imageUrl;
   final String eventName;
-  final String eventTime;
 
   const QrcodePage({
     super.key,
     required this.imageUrl,
     required this.eventName,
-    required this.eventTime,
   });
 
   @override
@@ -31,48 +29,7 @@ class _QrcodePageState extends State<QrcodePage> {
   String? selectedHorario;
 
   Future<void> _captureAndSavePng() async {
-    try {
-      RenderRepaintBoundary boundary =
-          _qrkey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      var image = await boundary.toImage(pixelRatio: 3.0);
-
-      final whitePaint = Paint()..color = Colors.white;
-      final recorder = PictureRecorder();
-      final canvas = Canvas(recorder,
-          Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()));
-      canvas.drawRect(
-          Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
-          whitePaint);
-      canvas.drawImage(image, Offset.zero, Paint());
-      final picture = recorder.endRecording();
-      final img = await picture.toImage(image.width, image.height);
-      ByteData? byteData = await img.toByteData(format: ImageByteFormat.png);
-      Uint8List pngBytes = byteData!.buffer.asUint8List();
-
-      String fileName = 'qr_code';
-      int i = 1;
-      while (await File('$externalDir/$fileName.png').exists()) {
-        fileName = 'qr_code_$i';
-        i++;
-      }
-
-      dirExists = await Directory(externalDir).exists();
-      if (!dirExists) {
-        await Directory(externalDir).create(recursive: true);
-        dirExists = true;
-      }
-
-      final file = await File('$externalDir/$fileName.png').create();
-      await file.writeAsBytes(pngBytes);
-
-      if (!mounted) return;
-      const snackBar = SnackBar(content: Text('QR guardado en la galeria'));
-      ScaffoldMessenger.of(context).showSnackBar(snackBar);
-    } catch (e) {
-      if (!mounted) return;
-      const snackBar = SnackBar(content: Text('Something went wrong!!!'));
-      ScaffoldMessenger.of(context).showSnackBar(snackBar);
-    }
+    // Implementación para capturar y guardar como PNG
   }
 
   @override
@@ -97,10 +54,9 @@ class _QrcodePageState extends State<QrcodePage> {
               children: [
                 ClipRRect(
                   child: Image.network(
-                    widget.imageUrl ??
-                        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKF_YlFFlKS6AQ8no0Qs_xM6AkjvwFwP61og&s',
-                    width: double.infinity, // Ocupa todo el ancho
-                    height: 400, // Aumentar la altura de la imagen
+                    widget.imageUrl,
+                    width: double.infinity,
+                    height: 400,
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -121,116 +77,193 @@ class _QrcodePageState extends State<QrcodePage> {
             SizedBox(height: 15),
             _buildHorarioSelector(),
             SizedBox(height: 15),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.5),
-                      spreadRadius: 2,
-                      blurRadius: 5,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    SizedBox(
-                      width: 200,
-                      height: 40,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            data = _textController.text;
-                          });
-                        },
-                        child: Text(
-                          "Comprar",
-                          style: TextStyle(color: Colors.white),
+            // Show "Comprar Boleto" only if a horario is selected
+            if (selectedHorario != null) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.5),
+                        spreadRadius: 2,
+                        blurRadius: 5,
+                        offset: Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      // Contenedor para "Comprar Boleto"
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 15, horizontal: 15),
+                        decoration: BoxDecoration(
+                          color: Colors.deepPurple,
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(
-                              Colors.deepPurple),
+                        child: Center(
+                          child: Text(
+                            'Comprar Boleto',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      widget.eventName,
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                      SizedBox(height: 16),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          widget.imageUrl,
+                          width: double.infinity,
+                          height: 200,
+                          fit: BoxFit.cover,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      widget.eventTime,
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.grey[600],
+                      SizedBox(height: 16),
+                      Text(
+                        "Evento: ${widget.eventName}",
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: 10),
-            Center(
-              child: Padding(
-                padding: EdgeInsets.only(left: 16.0, right: 16.0),
-                child: TextField(
-                  controller: _textController,
-                  decoration: InputDecoration(
-                    contentPadding: EdgeInsets.all(10),
-                    labelText: 'Ingrese su código',
-                    labelStyle: TextStyle(color: Colors.black),
-                    focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                            color: Color.fromARGB(255, 0, 0, 0), width: 2.0)),
-                    enabledBorder: OutlineInputBorder(
-                        borderSide:
-                            BorderSide(color: Colors.black, width: 2.0)),
+                      SizedBox(height: 8),
+                      // Mostrar el horario seleccionado
+                      Text(
+                        "Horario: $selectedHorario",
+                        style: TextStyle(
+                          fontSize: 20,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      // Botón "Procesar Pago"
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color.fromARGB(255, 0, 123, 255),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: TextButton(
+                          onPressed: () {
+                            // Aquí puedes agregar la lógica para procesar el pago
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: Text("Procesar Pago"),
+                                  content: Text(
+                                      "Se procesará el pago para el horario: $selectedHorario"),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
+                                      child: Text("Cerrar"),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.symmetric(vertical: 10),
+                            child: Text(
+                              "Procesar Pago",
+                              textAlign: TextAlign.center,
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 16),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
+            ],
             SizedBox(height: 10),
-            Center(
-              child: RepaintBoundary(
-                key: _qrkey,
-                child: QrImageView(
-                  data: data,
-                  version: QrVersions.auto,
-                  size: 200.0,
-                  gapless: true,
-                  errorStateBuilder: (ctx, err) {
-                    return Center(
-                      child: Text(
-                        "Algo salió mal",
-                        textAlign: TextAlign.center,
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-            SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: _captureAndSavePng,
-              child: Text(
-                "Exportar",
-                style: TextStyle(color: Colors.white),
-              ),
-              style: ButtonStyle(
-                backgroundColor:
-                    MaterialStateProperty.all<Color>(Colors.deepPurple),
-              ),
-            ),
-            SizedBox(height: 20),
+            // Center(
+            //   child: Padding(
+            //     padding: EdgeInsets.only(left: 16.0, right: 16.0),
+            //     child: TextField(
+            //       controller: _textController,
+            //       decoration: InputDecoration(
+            //         contentPadding: EdgeInsets.all(10),
+            //         labelText: 'Ingrese su código',
+            //         labelStyle: TextStyle(color: Colors.black),
+            //         focusedBorder: OutlineInputBorder(
+            //           borderSide: BorderSide(
+            //               color: Color.fromARGB(255, 0, 0, 0), width: 2.0),
+            //         ),
+            //         enabledBorder: OutlineInputBorder(
+            //           borderSide: BorderSide(color: Colors.black, width: 2.0),
+            //         ),
+            //       ),
+            //     ),
+            //   ),
+            // ),
+            // SizedBox(height: 10),
+            // Center(
+            //   child: RepaintBoundary(
+            //     key: _qrkey,
+            //     child: QrImageView(
+            //       data: data,
+            //       version: QrVersions.auto,
+            //       size: 200.0,
+            //       gapless: true,
+            //       errorStateBuilder: (ctx, err) {
+            //         return Center(
+            //           child: Text(
+            //             "Algo salió mal",
+            //             textAlign: TextAlign.center,
+            //           ),
+            //         );
+            //       },
+            //     ),
+            //   ),
+            // ),
+            // SizedBox(height: 10),
+            // SizedBox(
+            //   width: 200,
+            //   height: 40,
+            //   child: ElevatedButton(
+            //     onPressed: () {
+            //       setState(() {
+            //         data = _textController.text;
+            //       });
+            //     },
+            //     style: ButtonStyle(
+            //       backgroundColor:
+            //           // ignore: deprecated_member_use
+            //           MaterialStateProperty.all<Color>(Colors.deepPurple),
+            //     ),
+            //     child: Text(
+            //       "Comprar",
+            //       style: TextStyle(color: Colors.white),
+            //     ),
+            //   ),
+            // ),
+            // SizedBox(height: 20),
+            // ElevatedButton(
+            //   onPressed: _captureAndSavePng,
+            //   style: ButtonStyle(
+            //     backgroundColor:
+            //         MaterialStateProperty.all<Color>(Colors.deepPurple),
+            //   ),
+            //   child: Text(
+            //     "Exportar",
+            //     style: TextStyle(color: Colors.white),
+            //   ),
+            // ),
+            // SizedBox(height: 20),
           ],
         ),
       ),
@@ -241,17 +274,6 @@ class _QrcodePageState extends State<QrcodePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Center(
-          child: Text(
-            "Selecciona horario",
-            style: TextStyle(
-              color: Colors.purple,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
         Center(
           child: Container(
             padding: const EdgeInsets.all(16),
@@ -267,14 +289,27 @@ class _QrcodePageState extends State<QrcodePage> {
                 ),
               ],
             ),
-            child: Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              alignment: WrapAlignment.center,
+            child: Column(
               children: [
-                _horarioBox("10:00 AM", "11:00 PM"),
-                _horarioBox("2:00 PM", "10:00 PM"),
-                _horarioBox("5:00 PM", "12:00 PM"),
+                Text(
+                  "Selecciona horario",
+                  style: TextStyle(
+                    color: Colors.purple,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 48,
+                  runSpacing: 10,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    _horarioBox("10:00 AM", "11:00 PM"),
+                    _horarioBox("2:00 PM", "10:00 PM"),
+                    _horarioBox("5:00 PM", "12:00 PM"),
+                  ],
+                ),
               ],
             ),
           ),
@@ -295,28 +330,27 @@ class _QrcodePageState extends State<QrcodePage> {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           border: Border.all(
-            color: Colors.purple,
+            color: Colors.deepPurple,
             width: 2,
           ),
+          color: isSelected ? Colors.deepPurple : Colors.white,
           borderRadius: BorderRadius.circular(8),
-          color: isSelected ? Colors.purple : Colors.white,
         ),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               inicio,
               style: TextStyle(
-                color: isSelected ? Colors.white : Colors.purple,
-                fontSize: 18,
+                color: isSelected ? Colors.white : Colors.deepPurple,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 5),
             Text(
               fin,
               style: TextStyle(
-                color: isSelected ? Colors.white : Colors.purple,
+                color: isSelected ? Colors.white : Colors.deepPurple,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),

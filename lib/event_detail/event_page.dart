@@ -261,7 +261,6 @@ class _EventPageState extends State<EventPage> with TickerProviderStateMixin {
                             'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKF_YlFFlKS6AQ8no0Qs_xM6AkjvwFwP61og&s', // URL de imagen por defecto si no está disponible en el evento
                         eventName:
                             event!['evento_nombre'] ?? 'Nombre no disponible',
-                        eventTime: event!['hora'] ?? 'Hora no disponible',
                       ),
                     ),
                   );
