@@ -256,8 +256,10 @@ class _EventPageState extends State<EventPage> with TickerProviderStateMixin {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => QrcodePage(imageUrl: event!['imagen_url']) // Pasar el id //<-------------------- Modificado
-                    ),
+                        builder: (context) => QrcodePage(
+                            imageUrl: event![
+                                'imagen_url']) // Pasar el id //<-------------------- Modificado
+                        ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
