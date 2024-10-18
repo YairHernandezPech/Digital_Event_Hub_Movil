@@ -256,10 +256,14 @@ class _EventPageState extends State<EventPage> with TickerProviderStateMixin {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => QrcodePage(
-                            imageUrl: event![
-                                'imagen_url']) // Pasar el id //<-------------------- Modificado
-                        ),
+                      builder: (context) => QrcodePage(
+                        imageUrl: event!['imagen_url'] ??
+                            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKF_YlFFlKS6AQ8no0Qs_xM6AkjvwFwP61og&s', // URL de imagen por defecto si no está disponible en el evento
+                        eventName:
+                            event!['evento_nombre'] ?? 'Nombre no disponible',
+                        eventTime: event!['hora'] ?? 'Hora no disponible',
+                      ),
+                    ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
