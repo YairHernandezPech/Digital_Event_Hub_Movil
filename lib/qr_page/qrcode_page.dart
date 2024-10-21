@@ -4,7 +4,9 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 class QrcodePage extends StatefulWidget {
   final String imageUrl;
@@ -21,7 +23,7 @@ class QrcodePage extends StatefulWidget {
 }
 
 class _QrcodePageState extends State<QrcodePage> {
-  final TextEditingController _textController = TextEditingController(text: '');
+     final TextEditingController _textController = TextEditingController(text: '');
   String data = '';
   final GlobalKey _qrkey = GlobalKey();
   bool dirExists = false;
@@ -29,8 +31,163 @@ class _QrcodePageState extends State<QrcodePage> {
   String? selectedHorario;
   bool showTicketInfo = false;
 
-  Future<void> _captureAndSavePng() async {
-    // Implementación para capturar y guardar como PNG
+   // Solicitar permiso para escribir en el almacenamiento
+  Future<void> _requestPermission() async {
+    var status = await Permission.storage.status;
+    if (!status.isGranted) {
+      await Permission.storage.request();
+    }
+  }
+
+  // Función para guardar el archivo PDF
+  Future<void> _captureAndSavePdf() async {
+    try {
+      // Capturar el QR como imagen
+      RenderRepaintBoundary boundary =
+          _qrkey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      var image = await boundary.toImage(pixelRatio: 3.0);
+      ByteData? byteData = await image.toByteData(format: ImageByteFormat.png);
+      Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+      // Crear el documento PDF
+      final pdf = pw.Document();
+
+      // Agregar el código QR como imagen al PDF
+    
+      pdf.addPage(
+        pw.Page(
+          build: (pw.Context context) {
+            return pw.Center(
+              child: pw.Image(pw.MemoryImage(pngBytes)),
+            );
+          },
+        ),
+      );
+
+      // Verificar permisos
+      await _requestPermission();
+
+      // Definir la ruta de guardado
+      Directory? externalDir = Directory('/storage/emulated/0/Download/Qr_code');
+
+      // Verificar si el directorio existe, si no, crearlo
+      if (!await externalDir.exists()) {
+        await externalDir.create(recursive: true);
+      }
+
+      // Guardar el PDF en la ubicación especificada
+      String filePath = "${externalDir.path}/qr_code_${DateTime.now().millisecondsSinceEpoch}.pdf";
+      File file = File(filePath);
+      await file.writeAsBytes(await pdf.save());
+
+      if (!mounted) return;
+
+      // Mostrar mensaje de éxito
+      const snackBar = SnackBar(content: Text('QR code saved as PDF in Downloads/Qr_code'));
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    } catch (e) {
+      if (!mounted) return;
+      const snackBar = SnackBar(content: Text('Something went wrong!!!'));
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    }
+  }
+  
+
+  void _showDialog() {
+             showDialog(
+                    context: context,
+                    builder: (context) {
+                      return StatefulBuilder(
+                        builder: (BuildContext context, setState) {
+                          return AlertDialog(
+                        title: Text("Información de Pago"),
+                        content: SingleChildScrollView(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                          SizedBox(
+                          height: 250,
+                          width: 250,
+                          child: Center(
+                            child: RepaintBoundary(
+                                key: _qrkey,
+                                child: data.isEmpty
+                                ? Text("Ingrese su codigo para generar el qr")
+                                : QrImageView(
+                                  data: data,
+                                  version: QrVersions.auto,
+                                  size: 200.0,
+                                  errorStateBuilder: (ctx, err) {
+                                    return Center(
+                                      child: Text(
+                                        "Algo salio mal",
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                          ),
+                                                ),
+                          SizedBox(height: 5,),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "¿Tienes un codigo promocional?",
+                                    style: TextStyle(color: Colors.grey[800]),
+                                   
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 5),
+                            
+                              TextField(
+                                decoration: InputDecoration(
+                                  border: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                      color: Colors.deepPurple,
+                                      width: 2.0,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                      color: Colors.deepPurple,
+                                      width: 2.0,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                      color: Colors.deepPurple,
+                                      width: 2.0,
+                                    ),
+                                  ),
+                                  hintText: 'Ingrese su código promocional',
+                                ),
+                                onChanged: (value) {
+                                  setState(() {
+                                    data = value;
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () async {
+                              await _captureAndSavePdf(); // Exportar el QR como PDF y guardarlo
+                              if (!context.mounted) return;
+                              Navigator.pop(context); // Cerrar el diálogo
+                            },
+                            child: Text("Canjear"),
+                          ),
+                        ],
+                      );
+                        },
+                      );
+                    },
+                  );
   }
 
   @override
@@ -97,86 +254,6 @@ class _QrcodePageState extends State<QrcodePage> {
       ),
     );
   }
-
-  // Center(
-  //   child: Padding(
-  //     padding: EdgeInsets.only(left: 16.0, right: 16.0),
-  //     child: TextField(
-  //       controller: _textController,
-  //       decoration: InputDecoration(
-  //         contentPadding: EdgeInsets.all(10),
-  //         labelText: 'Ingrese su código',
-  //         labelStyle: TextStyle(color: Colors.black),
-  //         focusedBorder: OutlineInputBorder(
-  //           borderSide: BorderSide(
-  //               color: Color.fromARGB(255, 0, 0, 0), width: 2.0),
-  //         ),
-  //         enabledBorder: OutlineInputBorder(
-  //           borderSide: BorderSide(color: Colors.black, width: 2.0),
-  //         ),
-  //       ),
-  //     ),
-  //   ),
-  // ),
-  // SizedBox(height: 10),
-  // Center(
-  //   child: RepaintBoundary(
-  //     key: _qrkey,
-  //     child: QrImageView(
-  //       data: data,
-  //       version: QrVersions.auto,
-  //       size: 200.0,
-  //       gapless: true,
-  //       errorStateBuilder: (ctx, err) {
-  //         return Center(
-  //           child: Text(
-  //             "Algo salió mal",
-  //             textAlign: TextAlign.center,
-  //           ),
-  //         );
-  //       },
-  //     ),
-  //   ),
-  // ),
-  // SizedBox(height: 10),
-  // SizedBox(
-  //   width: 200,
-  //   height: 40,
-  //   child: ElevatedButton(
-  //     onPressed: () {
-  //       setState(() {
-  //         data = _textController.text;
-  //       });
-  //     },
-  //     style: ButtonStyle(
-  //       backgroundColor:
-  //           // ignore: deprecated_member_use
-  //           MaterialStateProperty.all<Color>(Colors.deepPurple),
-  //     ),
-  //     child: Text(
-  //       "Comprar",
-  //       style: TextStyle(color: Colors.white),
-  //     ),
-  //   ),
-  // ),
-  // SizedBox(height: 20),
-  // ElevatedButton(
-  //   onPressed: _captureAndSavePng,
-  //   style: ButtonStyle(
-  //     backgroundColor:
-  //         MaterialStateProperty.all<Color>(Colors.deepPurple),
-  //   ),
-  //   child: Text(
-  //     "Exportar",
-  //     style: TextStyle(color: Colors.white),
-  //   ),
-  // ),
-  // SizedBox(height: 20),
-  //  ],
-  //),
-  //),
-  //)
-  //}
   Widget _buildHorarioSelector() {
     return Center(
       child: Container(
@@ -363,66 +440,7 @@ class _QrcodePageState extends State<QrcodePage> {
               ),
               child: TextButton(
                 onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) {
-                      return AlertDialog(
-                        title: Text("Información de Pago"),
-                        content: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              "Se procesará el pago para el evento:",
-                              style: TextStyle(color: Colors.grey[800]),
-                            ),
-                            SizedBox(height: 6),
-                            Text(
-                              widget.eventName,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                            SizedBox(height: 10),
-                            Text(
-                              "Horario: $selectedHorario",
-                              style: TextStyle(color: Colors.grey[600]),
-                            ),
-                            SizedBox(height: 10),
-                            TextField(
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: Colors.deepPurple,
-                                    width: 2.0,
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: Colors.deepPurple,
-                                    width: 2.0,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: Colors.deepPurple,
-                                    width: 2.0,
-                                  ),
-                                ),
-                                hintText: 'Ingrese su código promocional',
-                              ),
-                            ),
-                          ],
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: Text("Cerrar"),
-                          ),
-                        ],
-                      );
-                    },
-                  );
+                 _showDialog();
                 },
                 child: Container(
                   width: double.infinity,
