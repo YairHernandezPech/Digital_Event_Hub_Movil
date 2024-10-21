@@ -3,10 +3,11 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:pdf/pdf.dart';
+import 'package:open_file/open_file.dart';
 
 class QrcodePage extends StatefulWidget {
   final String imageUrl;
@@ -23,15 +24,14 @@ class QrcodePage extends StatefulWidget {
 }
 
 class _QrcodePageState extends State<QrcodePage> {
-     final TextEditingController _textController = TextEditingController(text: '');
+  final TextEditingController _textController = TextEditingController(text: '');
   String data = '';
-  final GlobalKey _qrkey = GlobalKey();
-  bool dirExists = false;
-  dynamic externalDir = '/storage/emulated/0/Download/Qr_code';
   String? selectedHorario;
   bool showTicketInfo = false;
 
-   // Solicitar permiso para escribir en el almacenamiento
+  dynamic externalDir = '/storage/emulated/0/Download/Qr_code';
+
+  // Solicitar permiso para escribir en el almacenamiento
   Future<void> _requestPermission() async {
     var status = await Permission.storage.status;
     if (!status.isGranted) {
@@ -39,26 +39,91 @@ class _QrcodePageState extends State<QrcodePage> {
     }
   }
 
-  // Función para guardar el archivo PDF
+  // Función para guardar el archivo PDF y abrirlo después de la descarga
   Future<void> _captureAndSavePdf() async {
     try {
-      // Capturar el QR como imagen
-      RenderRepaintBoundary boundary =
-          _qrkey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      var image = await boundary.toImage(pixelRatio: 3.0);
-      ByteData? byteData = await image.toByteData(format: ImageByteFormat.png);
-      Uint8List pngBytes = byteData!.buffer.asUint8List();
-
       // Crear el documento PDF
       final pdf = pw.Document();
 
-      // Agregar el código QR como imagen al PDF
-    
+      // Generar el código QR como imagen
+      final qrImage = QrPainter(
+        data: data,
+        version: QrVersions.auto,
+        gapless: true,
+        color: const Color(0xFF000000),
+        emptyColor: const Color(0xFFFFFFFF),
+      );
+      final image = await qrImage.toImage(200);
+      final byteData = await image.toByteData(format: ImageByteFormat.png);
+      final pngBytes = byteData!.buffer.asUint8List();
+
+// Agregar la información al PDF
       pdf.addPage(
         pw.Page(
           build: (pw.Context context) {
             return pw.Center(
-              child: pw.Image(pw.MemoryImage(pngBytes)),
+              child: pw.Container(
+                padding: pw.EdgeInsets.all(24),
+                child: pw.Column(
+                  mainAxisAlignment: pw.MainAxisAlignment.center,
+                  crossAxisAlignment: pw.CrossAxisAlignment.center,
+                  children: [
+                    pw.Text(
+                      'Evento: ${widget.eventName}',
+                      textAlign: pw.TextAlign.center,
+                      style: pw.TextStyle(
+                        fontSize: 28,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.blueAccent,
+                      ),
+                    ),
+                    pw.SizedBox(height: 15),
+                    pw.Text(
+                      'Horario: $selectedHorario',
+                      textAlign: pw.TextAlign.center,
+                      style: pw.TextStyle(
+                        fontSize: 22,
+                        color: PdfColors.black,
+                      ),
+                    ),
+                    pw.SizedBox(height: 30),
+                    pw.Center(
+                      child: pw.Container(
+                        width: 430,
+                        height: 430,
+                        decoration: pw.BoxDecoration(
+                          border: pw.Border.all(
+                            color: PdfColors.blueAccent,
+                            width: 2,
+                          ),
+                          borderRadius: pw.BorderRadius.circular(15),
+                        ),
+                        child: pw.Center(
+                          // Centrar el QR dentro del contenedor
+                          child: pw.Padding(
+                            padding: const pw.EdgeInsets.all(8),
+                            child: pw.Image(
+                              pw.MemoryImage(pngBytes),
+                              width: 400,
+                              height: 400,
+                              fit: pw.BoxFit.contain,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    pw.SizedBox(height: 20),
+                    pw.Text(
+                      '¡Gracias por asistir!',
+                      textAlign: pw.TextAlign.center,
+                      style: pw.TextStyle(
+                        fontSize: 18,
+                        color: PdfColors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             );
           },
         ),
@@ -68,7 +133,8 @@ class _QrcodePageState extends State<QrcodePage> {
       await _requestPermission();
 
       // Definir la ruta de guardado
-      Directory? externalDir = Directory('/storage/emulated/0/Download/Qr_code');
+      Directory? externalDir =
+          Directory('/storage/emulated/0/Download/Qr_code');
 
       // Verificar si el directorio existe, si no, crearlo
       if (!await externalDir.exists()) {
@@ -76,14 +142,19 @@ class _QrcodePageState extends State<QrcodePage> {
       }
 
       // Guardar el PDF en la ubicación especificada
-      String filePath = "${externalDir.path}/qr_code_${DateTime.now().millisecondsSinceEpoch}.pdf";
+      String filePath =
+          "${externalDir.path}/qr_code_${DateTime.now().millisecondsSinceEpoch}.pdf";
       File file = File(filePath);
       await file.writeAsBytes(await pdf.save());
 
       if (!mounted) return;
 
+      // Abrir el archivo PDF después de guardarlo
+      await OpenFile.open(filePath);
+
       // Mostrar mensaje de éxito
-      const snackBar = SnackBar(content: Text('QR code saved as PDF in Downloads/Qr_code'));
+      const snackBar =
+          SnackBar(content: Text('QR code saved and downloaded as PDF.'));
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
     } catch (e) {
       if (!mounted) return;
@@ -91,103 +162,46 @@ class _QrcodePageState extends State<QrcodePage> {
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
     }
   }
-  
 
   void _showDialog() {
-             showDialog(
-                    context: context,
-                    builder: (context) {
-                      return StatefulBuilder(
-                        builder: (BuildContext context, setState) {
-                          return AlertDialog(
-                        title: Text("Información de Pago"),
-                        content: SingleChildScrollView(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                          SizedBox(
-                          height: 250,
-                          width: 250,
-                          child: Center(
-                            child: RepaintBoundary(
-                                key: _qrkey,
-                                child: data.isEmpty
-                                ? Text("Ingrese su codigo para generar el qr")
-                                : QrImageView(
-                                  data: data,
-                                  version: QrVersions.auto,
-                                  size: 200.0,
-                                  errorStateBuilder: (ctx, err) {
-                                    return Center(
-                                      child: Text(
-                                        "Algo salio mal",
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                          ),
-                                                ),
-                          SizedBox(height: 5,),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "¿Tienes un codigo promocional?",
-                                    style: TextStyle(color: Colors.grey[800]),
-                                   
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 5),
-                            
-                              TextField(
-                                decoration: InputDecoration(
-                                  border: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: Colors.deepPurple,
-                                      width: 2.0,
-                                    ),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: Colors.deepPurple,
-                                      width: 2.0,
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: Colors.deepPurple,
-                                      width: 2.0,
-                                    ),
-                                  ),
-                                  hintText: 'Ingrese su código promocional',
-                                ),
-                                onChanged: (value) {
-                                  setState(() {
-                                    data = value;
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () async {
-                              await _captureAndSavePdf(); // Exportar el QR como PDF y guardarlo
-                              if (!context.mounted) return;
-                              Navigator.pop(context); // Cerrar el diálogo
-                            },
-                            child: Text("Canjear"),
-                          ),
-                        ],
-                      );
-                        },
-                      );
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, setState) {
+            return AlertDialog(
+              title: Text("Información de Pago"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'Ingrese su código promocional',
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        data = value;
+                      });
                     },
-                  );
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () async {
+                    await _captureAndSavePdf(); // Generar y guardar el PDF
+                    if (!context.mounted) return;
+                    Navigator.pop(context); // Cerrar el diálogo
+                  },
+                  child: Text("Canjear"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -243,17 +257,13 @@ class _QrcodePageState extends State<QrcodePage> {
             SizedBox(height: 20),
             _buildHorarioSelector(),
             SizedBox(height: 20),
-            AnimatedOpacity(
-              opacity: showTicketInfo ? 1.0 : 0.0,
-              duration: Duration(milliseconds: 300),
-              child: showTicketInfo ? _buildTicketInfo() : SizedBox.shrink(),
-            ),
-            SizedBox(height: 20),
+            if (showTicketInfo) _buildTicketInfo(),
           ],
         ),
       ),
     );
   }
+
   Widget _buildHorarioSelector() {
     return Center(
       child: Container(
@@ -261,10 +271,10 @@ class _QrcodePageState extends State<QrcodePage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.black, width: 1), // Borde negro
+          border: Border.all(color: Colors.black, width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2), // Sombra negra
+              color: Colors.black.withOpacity(0.2),
               spreadRadius: 2,
               blurRadius: 10,
               offset: Offset(0, 5),
@@ -304,7 +314,7 @@ class _QrcodePageState extends State<QrcodePage> {
       onTap: () {
         setState(() {
           selectedHorario = "$inicio - $fin";
-          showTicketInfo = true; // Muestra el recuadro al seleccionar
+          showTicketInfo = true;
         });
       },
       child: AnimatedContainer(
@@ -351,10 +361,10 @@ class _QrcodePageState extends State<QrcodePage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.black, width: 1), // Borde negro
+          border: Border.all(color: Colors.black, width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2), // Sombra negra
+              color: Colors.black.withOpacity(0.2),
               spreadRadius: 2,
               blurRadius: 10,
               offset: Offset(0, 5),
@@ -440,7 +450,7 @@ class _QrcodePageState extends State<QrcodePage> {
               ),
               child: TextButton(
                 onPressed: () {
-                 _showDialog();
+                  _showDialog();
                 },
                 child: Container(
                   width: double.infinity,

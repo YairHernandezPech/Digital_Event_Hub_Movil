@@ -96,7 +96,7 @@ class _EventPageState extends State<EventPage> with TickerProviderStateMixin {
                                   height: 500,
                                   fit: BoxFit.cover,
                                 )
-                              : const CircularProgressIndicator(), // Muestra un indicador de carga mientras se obtienen los datos
+                              : const CircularProgressIndicator(),
                         ),
                         Positioned(
                           bottom: 30,
