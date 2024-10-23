@@ -277,6 +277,7 @@ class _ProfileHomeState extends State<ProfileHome> {
                           style: TextStyle(color: Colors.white, fontSize: 25.0),
                         ),
                       ),
+                      const SizedBox(height: 20.0),
                     ],
                   ),
                 ),
