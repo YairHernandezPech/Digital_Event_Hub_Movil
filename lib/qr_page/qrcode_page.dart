@@ -8,15 +8,44 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
 import 'package:open_file/open_file.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+class Horario {
+  final int horarioId;
+  final int eventoId;
+  final String horaInicio;
+  final String horaFin;
+
+  Horario({
+    required this.horarioId,
+    required this.eventoId,
+    required this.horaInicio,
+    required this.horaFin,
+  });
+
+  // Método para crear una instancia de Horario a partir de un mapa
+  factory Horario.fromJson(Map<String, dynamic> json) {
+    return Horario(
+      horarioId: json['horario_id'],
+      eventoId: json['evento_id'],
+      horaInicio: json['hora_inicio'],
+      horaFin: json['hora_fin'],
+    );
+  }
+}
+
 
 class QrcodePage extends StatefulWidget {
   final String imageUrl;
   final String eventName;
+  final int eventoId;
 
   const QrcodePage({
     super.key,
     required this.imageUrl,
     required this.eventName,
+    required this.eventoId,
   });
 
   @override
@@ -27,9 +56,33 @@ class _QrcodePageState extends State<QrcodePage> {
   final TextEditingController _textController = TextEditingController(text: '');
   String data = '';
   String? selectedHorario;
+  int? selectedHorarioId; // Nuevo campo para almacenar el ID del horario
   bool showTicketInfo = false;
 
+  List<Horario> horarios = [];
+
   dynamic externalDir = '/storage/emulated/0/Download/Qr_code';
+
+  
+
+   @override
+  void initState() {
+    super.initState();
+    fetchHorarios(widget.eventoId); // Llama a la función para obtener los horarios
+  }
+
+ Future<void> fetchHorarios(int eventoId) async {
+    final response = await http.get(Uri.parse('https://api-digital.fly.dev/api/schedule/by-event/$eventoId'));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      horarios = data.map((json) => Horario.fromJson(json)).toList(); // Usa el modelo Horario
+      setState(() {});
+      print("el id de: $eventoId");
+    } else {
+      throw Exception('Failed to load horarios');
+    }
+  }
 
   // Solicitar permiso para escribir en el almacenamiento
   Future<void> _requestPermission() async {
@@ -163,6 +216,63 @@ class _QrcodePageState extends State<QrcodePage> {
     }
   }
 
+   // Función para verificar el código
+Future<String> checkCode(String code) async {
+  try {
+    final response = await http.post(
+      Uri.parse('https://api-digital.fly.dev/api/ticket/check'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'code': code}), // Envía el código introducido
+    );
+
+    print('Respuesta de verificar código: ${response.statusCode} - ${response.body}'); // Imprimir respuesta
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body)['message']; // Retorna el mensaje de éxito
+    } else {
+      throw Exception('Código no válido o error en la API');
+    }
+  } catch (e) {
+    // Manejo de errores
+    if (!context.mounted) return 'Error'; // Verifica que el contexto esté montado
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error al verificar el código: $e')),
+    );
+    return 'Error'; // Retorna un mensaje de error
+  }
+}
+
+Future<void> redeemCode(String code) async {
+  try {
+    final response = await http.post(
+      Uri.parse('https://api-digital.fly.dev/api/ticket/redeem'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'evento_id': widget.eventoId, // Enviar el evento ID
+        'code': code,                  // Enviar el código introducido
+        'horario_id': selectedHorarioId // Enviar el horario ID
+      }),
+    );
+  print('Respuesta de canjear código: ${response.statusCode} - ${response.body}'); // Imprimir respuesta
+
+    if (response.statusCode == 200) {
+      print('Código canjeado con éxito');
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Código canjeado con éxito')),
+      );
+    } else {
+      throw Exception('Error al canjear el código: ${response.body}');
+    }
+  } catch (e) {
+    // Manejo de errores
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error al canjear el código: $e')),
+    );
+  }
+}
+
   void _showDialog() {
     showDialog(
       context: context,
@@ -175,6 +285,7 @@ class _QrcodePageState extends State<QrcodePage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
+                     controller: _textController, 
                     decoration: InputDecoration(
                       border: OutlineInputBorder(),
                       hintText: 'Ingrese su código promocional',
@@ -190,9 +301,29 @@ class _QrcodePageState extends State<QrcodePage> {
               actions: [
                 TextButton(
                   onPressed: () async {
-                    await _captureAndSavePdf(); // Generar y guardar el PDF
-                    if (!context.mounted) return;
+                      final String code = _textController.text; // Obtener el código del TextController
+
+                  // Primero verificar el código
+                  String message = await checkCode(code);
+
+                  if (message == 'Error') {
+                    return; // Si hay un error, no hacemos nada más
+                  }
+
+                  // Mostrar el mensaje de verificación en el SnackBar
+                  if (!context.mounted) return; // Verificar si el contexto está montado
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+
+                  // Si el mensaje indica que el cupón es válido, proceder a canjearlo
+                  if (message == "El cupón es válido y puede ser canjeado.") {
+                    await redeemCode(code); // Canjear el código
+                    await _captureAndSavePdf(); // Lógica para capturar y guardar el PDF
+
+                    if (!context.mounted) return; // Verificar si el contexto está montado
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Código canjeado con éxito')));
+
                     Navigator.pop(context); // Cerrar el diálogo
+                  }
                   },
                   child: Text("Canjear"),
                 ),
@@ -294,13 +425,13 @@ class _QrcodePageState extends State<QrcodePage> {
             const SizedBox(height: 15),
             Wrap(
               spacing: 40,
-              runSpacing: 15,
-              alignment: WrapAlignment.center,
-              children: [
-                _horarioBox("10:00 AM", "11:00 PM"),
-                _horarioBox("2:00 PM", "10:00 PM"),
-                _horarioBox("5:00 PM", "12:00 PM"),
-              ],
+                runSpacing: 15,
+                alignment: WrapAlignment.center,
+                children: horarios.map((horario) {
+                  String inicio = horario.horaInicio.substring(0, 5); // Puedes formatear aquí
+                  String fin = horario.horaFin.substring(0, 5); // Puedes formatear aquí
+                  return _horarioBox(inicio, fin);
+                }).toList(),
             ),
           ],
         ),

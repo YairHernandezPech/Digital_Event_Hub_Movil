@@ -5,7 +5,7 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiServiceLogin {
-  final String apiUrl = "https://api-digitalevent.onrender.com/api/auth/login";
+  final String apiUrl = "https://api-digital.fly.dev/api/users/login";
 
   // Método de login que guarda el token en SharedPreferences
   Future<Map<String, dynamic>> login(Map<String, dynamic> data) async {

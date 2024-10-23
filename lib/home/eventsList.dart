@@ -108,15 +108,11 @@ class _EventsListBodyState extends State<EventsListBody>
     });
 
     final response = await http.get(Uri.parse(
-        'https://api-digitalevent.onrender.com/api/events/get/approved'));
+        'https://api-digital.fly.dev/api/events/approved'));
 
     if (response.statusCode == 200) {
       List<dynamic> eventos = jsonDecode(response.body);
 
-      if (category.isNotEmpty) {
-        eventos =
-            eventos.where((evento) => evento['categoria'] == category).toList();
-      }
 
       setState(() {
         datos = eventos;
