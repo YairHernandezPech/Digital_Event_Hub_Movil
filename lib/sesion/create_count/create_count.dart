@@ -1,9 +1,14 @@
+import 'package:digital_event_hub/home/eventsList.dart';
 import 'package:digital_event_hub/sesion/create_count/ApiServiceCount.dart';
+import 'package:digital_event_hub/sesion/login/ApiServiceLogin.dart';
 import 'package:digital_event_hub/sesion/login/login.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CreateCount extends StatefulWidget {
+  const CreateCount({super.key});
+
   @override
   State<CreateCount> createState() => _CreateCountState();
 }
@@ -18,6 +23,7 @@ class _CreateCountState extends State<CreateCount> {
   final TextEditingController phoneController = TextEditingController();
 
   final ApiServiceCount _apiServiceCount = ApiServiceCount();
+  final ApiServiceLogin _apiServiceLogin = ApiServiceLogin();
 
   void _togglePasswordVisibility() {
     setState(() {
@@ -25,6 +31,7 @@ class _CreateCountState extends State<CreateCount> {
     });
   }
 
+  //* Función para registrar y luego iniciar sesión automáticamente
   void _register(BuildContext context) async {
     final Map<String, dynamic> data = {
       'nombre': nameController.text,
@@ -36,14 +43,31 @@ class _CreateCountState extends State<CreateCount> {
     };
 
     try {
+      // Registrar al usuario
       await _apiServiceCount.register(data);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Cuenta creada exitosamente')),
       );
+
+      // Iniciar sesión automáticamente tras el registro
+      final loginData = {
+        'email': emailController.text,
+        'contrasena': passwordController.text,
+      };
+
+      await _apiServiceLogin.login(loginData); // Realiza el login
+
+      // Navegar a la pantalla de EventsList
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+            builder: (context) => EventsList()), // Cambia a EventsList
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Error al crear la cuenta, intente de nuevo'),
+          content: Text(
+              'Error al crear la cuenta o iniciar sesión, intente de nuevo'),
         ),
       );
     }
@@ -217,7 +241,8 @@ class _CreateCountState extends State<CreateCount> {
     );
   }
 
-  Widget buildTextField(TextEditingController controller, String labelText, Icon icon) {
+  Widget buildTextField(
+      TextEditingController controller, String labelText, Icon icon) {
     return SizedBox(
       width: 325,
       child: TextField(
