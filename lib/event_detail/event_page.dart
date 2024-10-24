@@ -1,5 +1,4 @@
 import 'dart:ui'; // Importa ImageFilter para aplicar el filtro de desenfoque
-import 'package:digital_event_hub/escenarios/escenario1.dart'; //<-------------------- Importa la clase Escenario1
 import 'package:digital_event_hub/event_detail/comentarios.dart'; // Asegúrate de que la ruta es correcta
 import 'package:digital_event_hub/home/eventsList.dart';
 import 'package:digital_event_hub/qr_page/qrcode_page.dart';
@@ -23,7 +22,7 @@ class EventPage extends StatefulWidget {
 class _EventPageState extends State<EventPage> with TickerProviderStateMixin {
   Map<String, dynamic>? event; // Variable para almacenar los datos del evento
   int get id => widget.id; // Obtén el id del evento
-
+  String? tipoEvent;
   @override
   void initState() {
     super.initState();
@@ -42,8 +41,21 @@ class _EventPageState extends State<EventPage> with TickerProviderStateMixin {
         event = fetchedEvent; // Actualiza el estado con el evento obtenido
         print(event); // Imprime el evento para depuración
       });
+      validarEtipovent();
     } catch (e) {
       print("Failed to load event: $e"); // Manejo de errores
+    }
+  }
+
+    Future<void> validarEtipovent() async {
+    try {
+      if (event!['tipo_evento'] == 1) {
+        tipoEvent = "Publico";
+      }else{
+        tipoEvent = "Privado";
+      }
+    } catch (error) {
+      print(error);
     }
   }
 
@@ -70,7 +82,7 @@ class _EventPageState extends State<EventPage> with TickerProviderStateMixin {
             icon: const Icon(Icons.share, color: Colors.black),
             onPressed: () async {
               await Share.share(
-                  'Hola, te invito a este evento: ${event!['evento_nombre']} en ${event!['ubicacion']} el ${event!['fecha_inicio'].substring(0, 10)} a las ${event!['hora']}');
+                  'Hola, te invito a este evento: ${event!['evento_nombre']} en ${event!['ubicacion']} el ${event!['fecha_inicio'].substring(0, 10)}');
             },
           ),
         ],
@@ -172,7 +184,7 @@ class _EventPageState extends State<EventPage> with TickerProviderStateMixin {
                         Icon(Icons.access_time),
                         SizedBox(width: 4),
                         Text(event != null
-                            ? 'Hora: ${event!['hora']}'
+                            ? 'Hora: De ${event!['horario_inicio_1'] } a ${event!['horario_fin_1']}'
                             : 'Hora: Desconocida'),
                         Spacer(),
                         Row(
@@ -185,13 +197,6 @@ class _EventPageState extends State<EventPage> with TickerProviderStateMixin {
                                     id); // Se pasó el id como parámetro //<-------------------- Modificado
                               },
                             ),
-                            Icon(Icons.star,
-                                size: 35,
-                                color: Color.fromARGB(255, 255, 238, 0)),
-                            Text(
-                              '4.8',
-                              style: TextStyle(fontSize: 20),
-                            )
                           ],
                         ),
                       ],
@@ -203,9 +208,7 @@ class _EventPageState extends State<EventPage> with TickerProviderStateMixin {
                             size: 15, color: Colors.grey),
                         SizedBox(width: 5),
                         Text(
-                            event != null
-                                ? 'Evento: ${event!['tipo_evento'] ?? 'Desconocido'}'
-                                : 'Descripción no disponible',
+                          "Evento: $tipoEvent",
                             style: TextStyle(
                                 fontSize: 16, height: 1.4, color: Colors.grey)),
                       ],
@@ -230,7 +233,7 @@ class _EventPageState extends State<EventPage> with TickerProviderStateMixin {
                         SizedBox(width: 5),
                         Text(
                             event != null
-                                ? 'Precio: ${event!['monto'] ?? 'Desconocida'}'
+                                ? 'Precio: ${event!['precio'] ?? 'Desconocida'}'
                                 : 'Descripción no disponible',
                             style: TextStyle(
                                 fontSize: 16, height: 1.4, color: Colors.grey)),

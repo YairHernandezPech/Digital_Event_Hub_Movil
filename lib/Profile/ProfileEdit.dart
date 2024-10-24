@@ -7,8 +7,6 @@ import 'ApiServiceProfile.dart';
 import 'ProfileHome.dart';
 
 class ProfileEdith extends StatefulWidget {
-  const ProfileEdith({super.key});
-
   @override
   _ProfileEdithState createState() => _ProfileEdithState();
 }
@@ -19,13 +17,11 @@ class _ProfileEdithState extends State<ProfileEdith> {
   final String _defaultImagePath = 'assets/profile.png';
 
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _contrasenaController = TextEditingController();
-
+  final TextEditingController _lastNameController = TextEditingController();
   ApiServiceProfile apiService = ApiServiceProfile();
   bool _isLoading = true;
-  bool _isPasswordVisible =
-      false; // Estado para controlar visibilidad de la contraseña
 
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
@@ -33,15 +29,20 @@ class _ProfileEdithState extends State<ProfileEdith> {
 
     if (pickedFile != null) {
       File imageFile = File(pickedFile.path);
+
+      // Guarda la imagen seleccionada en la memoria interna
       final directory = await getApplicationDocumentsDirectory();
-      final localImage = await imageFile.copy(
-        '${directory.path}/${path.basename(pickedFile.path)}',
-      );
+      final String dirPath = directory.path;
+      final String fileName = path.basename(pickedFile.path);
+      final File localImage = await imageFile.copy('$dirPath/$fileName');
 
       setState(() {
         _image = localImage;
-        _imageUrl = localImage.path;
+        _imageUrl = localImage.path; // Guarda la URL de la imagen
+        print('Image path: $_imageUrl');
       });
+    } else {
+      print('No image selected.');
     }
   }
 
@@ -50,13 +51,17 @@ class _ProfileEdithState extends State<ProfileEdith> {
       final userData = await apiService.fetchUserData();
       setState(() {
         _nameController.text = userData['nombre'];
+        _emailController.text = userData['email'];
         _phoneController.text = userData['telefono'];
         _imageUrl = userData['fotoPerfil'];
+        _lastNameController.text = userData['last_name'];
         _isLoading = false;
       });
     } catch (e) {
       print('Error fetching user data: $e');
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -64,15 +69,18 @@ class _ProfileEdithState extends State<ProfileEdith> {
     try {
       final updatedData = {
         'nombre': _nameController.text,
+        'email': _emailController.text,
         'telefono': _phoneController.text,
-        'contrasena': _contrasenaController.text,
         'fotoPerfil': _imageUrl,
+        'last_name': _lastNameController.text
       };
       await apiService.updateUserData(updatedData);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Perfil actualizado exitosamente')),
+        const SnackBar(
+          content: Center(child: Text('Perfil actualizado exitosamente')),
+        ),
       );
-      Navigator.pushReplacement(
+      Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => ProfileHome()),
       );
@@ -92,8 +100,9 @@ class _ProfileEdithState extends State<ProfileEdith> {
   @override
   void dispose() {
     _nameController.dispose();
+    _emailController.dispose();
     _phoneController.dispose();
-    _contrasenaController.dispose();
+    _lastNameController.dispose();
     super.dispose();
   }
 
@@ -101,6 +110,7 @@ class _ProfileEdithState extends State<ProfileEdith> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: false,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -138,8 +148,14 @@ class _ProfileEdithState extends State<ProfileEdith> {
                   const SizedBox(height: 35),
                   _buildProfileTextField(
                     icon: Icons.person,
-                    hintText: 'Eider Pool',
+                    hintText: 'Name',
                     controller: _nameController,
+                  ),
+                  const SizedBox(height: 20),
+                  _buildProfileTextField(
+                    icon: Icons.person,
+                    hintText: 'Last Name',
+                    controller: _lastNameController,
                   ),
                   const SizedBox(height: 20),
                   _buildProfileTextField(
@@ -147,8 +163,6 @@ class _ProfileEdithState extends State<ProfileEdith> {
                     hintText: '+52(999)929737',
                     controller: _phoneController,
                   ),
-                  const SizedBox(height: 20),
-                  _buildPasswordTextField(), // Campo para la contraseña
                   const SizedBox(height: 40),
                   _buildActionButtons(),
                 ],
@@ -179,38 +193,6 @@ class _ProfileEdithState extends State<ProfileEdith> {
           borderSide: const BorderSide(color: Color(0xFFD2D2D2)),
         ),
         contentPadding: const EdgeInsets.symmetric(vertical: 20),
-      ),
-    );
-  }
-
-  Widget _buildPasswordTextField() {
-    return TextField(
-      controller: _contrasenaController,
-      obscureText: !_isPasswordVisible,
-      textAlign: TextAlign.left,
-      style: const TextStyle(color: Colors.black),
-      decoration: InputDecoration(
-        prefixIcon: const Icon(Icons.lock, color: Color(0xFFB5B5B5)),
-        hintText: '*************',
-        hintStyle: const TextStyle(color: Colors.black54),
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFD2D2D2)),
-        ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 20),
-        suffixIcon: IconButton(
-          icon: Icon(
-            _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-            color: const Color(0xFFB5B5B5),
-          ),
-          onPressed: () {
-            setState(() {
-              _isPasswordVisible = !_isPasswordVisible;
-            });
-          },
-        ),
       ),
     );
   }

@@ -27,7 +27,7 @@ class Evento {
 
 Future<List<Evento>> fetchEventos() async {
   final response = await http.get(
-      Uri.parse('https://api-digitalevent.onrender.com/api/events/get/approved'));
+      Uri.parse('https://api-digital.fly.dev/api/events/approved'));
 
   if (response.statusCode == 200) {
     List jsonResponse = json.decode(response.body);

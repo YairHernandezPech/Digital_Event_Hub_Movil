@@ -125,7 +125,7 @@ class _ProfileHomeState extends State<ProfileHome> {
                     children: [
                       const SizedBox(height: 10.0),
                       Text(
-                        userData?['nombre'] ?? 'Nombre no disponible',
+                        '${userData?['nombre'] ?? ''} ${userData?['last_name'] ?? 'Nombre no disponible'}',
                         style: const TextStyle(
                           fontSize: 35.0,
                           fontWeight: FontWeight.bold,

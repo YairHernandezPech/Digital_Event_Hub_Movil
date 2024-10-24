@@ -147,7 +147,6 @@ class ReviewsScreen extends StatelessWidget  {
                       ReviewCard(
                         reviewsList[index]['username'] ?? '',
                         reviewsList[index]['img'] ?? '',
-                        reviewsList[index]['qualification'].toString(),
                         reviewsList[index]['title'] ?? '',
                         reviewsList[index]['text'] ?? '',
                       ),
