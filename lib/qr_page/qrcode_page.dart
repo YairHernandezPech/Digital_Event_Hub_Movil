@@ -568,7 +568,8 @@ class _QrcodePageState extends State<QrcodePage> {
                 String inicio =
                     horario.horaInicio.substring(0, 5); // Puedes formatear aquí
                 String fin =
-                    horario.horaFin.substring(0, 5); // Puedes formatear aquí
+                    horario.horaFin.substring(0, 5); 
+                selectedHorarioId = horario.horarioId;    // Puedes formatear aquí
                 return _horarioBox(inicio, fin);
               }).toList(),
             ),
