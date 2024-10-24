@@ -374,6 +374,7 @@ class _QrcodePageState extends State<QrcodePage> {
               ),
               const SizedBox(height: 20),
               TextField(
+                 controller: _textController, 
                 decoration: InputDecoration(
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -386,10 +387,9 @@ class _QrcodePageState extends State<QrcodePage> {
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
                 onChanged: (value) {
-                  data = value; // Captura el valor del código ingresado.
+                 
                   setState(() {
-                    errorMessage =
-                        null; // Limpia el mensaje de error al cambiar el texto.
+                  data = value;
                   });
                 },
               ),
@@ -415,7 +415,8 @@ class _QrcodePageState extends State<QrcodePage> {
                 ),
                 onPressed: () async {
                   // Validar el código antes de proceder.
-                  String? validationMessage = validateCode(data);
+                   final String code = _textController.text;
+                  String? validationMessage = validateCode(code);
                   if (validationMessage != null) {
                     setState(() {
                       errorMessage =
@@ -425,7 +426,7 @@ class _QrcodePageState extends State<QrcodePage> {
                   }
 
                   // Verificar el código en el servidor.
-                  String message = await checkCode(data);
+                  String message = await checkCode(code);
                   if (message == 'Error') {
                     setState(() {
                       errorMessage =
@@ -443,7 +444,7 @@ class _QrcodePageState extends State<QrcodePage> {
 
                   // Si el código es válido y puede ser canjeado.
                   if (message == "El cupón es válido y puede ser canjeado.") {
-                    await redeemCode(data); // Canjear el código.
+                    await redeemCode(code); // Canjear el código.
                     await _captureAndSavePdf(); // Generar el PDF.
                     // ScaffoldMessenger.of(context).showSnackBar(
                     //   const SnackBar(
