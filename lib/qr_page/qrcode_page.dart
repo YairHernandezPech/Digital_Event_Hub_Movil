@@ -652,25 +652,6 @@ class _QrcodePageState extends State<QrcodePage> {
         ),
         child: Column(
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.purple, Colors.deepPurpleAccent],
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Text(
-                  'Comprar Boleto',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
             SizedBox(height: 20),
             ClipRRect(
               borderRadius: BorderRadius.circular(12),

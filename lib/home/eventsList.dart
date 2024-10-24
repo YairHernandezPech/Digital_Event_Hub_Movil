@@ -42,7 +42,7 @@ class _EventsListState extends State<EventsList> {
         backgroundColor: Colors.white,
         type: BottomNavigationBarType.fixed,
         items: <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
           BottomNavigationBarItem(
             icon: Image.asset(
               'assets/bag.png',
@@ -51,7 +51,7 @@ class _EventsListState extends State<EventsList> {
                   ? Theme.of(context).colorScheme.tertiary
                   : Colors.grey,
             ),
-            label: '',
+            label: 'Historial',
           ),
           BottomNavigationBarItem(
             icon: Image.asset(
@@ -61,7 +61,7 @@ class _EventsListState extends State<EventsList> {
                   ? Theme.of(context).colorScheme.tertiary
                   : Colors.grey,
             ),
-            label: '',
+            label: 'Notificaciones',
           ),
           BottomNavigationBarItem(
             icon: Icon(
@@ -70,7 +70,7 @@ class _EventsListState extends State<EventsList> {
                   ? Theme.of(context).colorScheme.tertiary
                   : Colors.grey,
             ),
-            label: '',
+            label: 'Ubicacion',
           ),
         ],
         currentIndex: _selectedIndex,
