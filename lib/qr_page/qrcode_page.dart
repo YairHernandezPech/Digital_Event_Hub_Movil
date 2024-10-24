@@ -330,7 +330,7 @@ class _QrcodePageState extends State<QrcodePage> {
 
   void _showDialog(BuildContext context) {
     String? errorMessage; // Variable para almacenar el mensaje de error.
-    String data = ""; // Asegúrate de inicializar 'data'.
+ 
 
     AwesomeDialog(
       context: context,
