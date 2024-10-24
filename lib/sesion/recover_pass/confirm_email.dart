@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:digital_event_hub/sesion/recover_pass/recover_pass.dart';
 import 'package:flutter/material.dart';
 import 'package:digital_event_hub/sesion/login/login.dart';
 import 'package:http/http.dart' as http;
@@ -11,7 +10,7 @@ class ConfirmEmail extends StatelessWidget {
   //const name({super.key});
 
   final _emailController = TextEditingController();
-  final url = Uri.parse('https://api-digitalevent.onrender.com/api/password/forgot-password/');
+  final url = Uri.parse('https://api-digital.fly.dev/api/password/forgot-password');
 
   
 

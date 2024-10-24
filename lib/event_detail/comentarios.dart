@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:digital_event_hub/event_detail/api_cometarios.dart';
 import 'package:digital_event_hub/sesion/login/idUser.dart';
 import 'package:flutter/material.dart';
@@ -38,44 +37,30 @@ class _ComentariosSheetState extends State<ComentariosSheet> {
   TextEditingController commentController = TextEditingController();
   ApiServiceComentarios apiService = ApiServiceComentarios();
   bool isLoading = false;
-  bool hasMore = true;
-  int currentPage = 1;
   List<Map<String, dynamic>> reviewsList = [];
 
   @override
   void initState() {
     super.initState();
-    commentsFuture = loadComments(page: 1);
+    commentsFuture = loadComments();
   }
 
-  Future<List<Map<String, dynamic>>> loadComments({int page = 1}) async {
-    if (isLoading || !hasMore) return reviewsList;
+  Future<List<Map<String, dynamic>>> loadComments() async {
     setState(() {
       isLoading = true;
     });
 
     try {
-      List<dynamic> comments = await apiService.fetchComments(widget.eventoId, page: page, limit: 10);
+      List<dynamic> comments = await apiService.fetchComments(widget.eventoId);
       for (var comment in comments) {
-        Map<String, dynamic> user = await apiService.fetchUser(comment['usuario_id']);
+        Map<String, dynamic> user = await apiService.fetchUser(comment['Usuario_id']);
         reviewsList.add({
-          'comentario_id': comment['comentario_id'],
-          'usuario_id': comment['usuario_id'],
-          'username': user['nombre'],
+          'comentario_id': comment['Comentario_id'],
+          'usuario_id': comment['Usuario_id'],
+          'username': comment['Usuario_nombre'] + user['last_name'], // Cambio a `Usuario_nombre`
           'img': user['fotoPerfil'],
-          'qualification': (Random().nextDouble() * 5).toStringAsFixed(1),
-          'text': comment['comentario'],
-          'fecha': comment['fecha'].substring(0, 10),
-        });
-      }
-
-      if (comments.isEmpty) {
-        setState(() {
-          hasMore = false;
-        });
-      } else {
-        setState(() {
-          currentPage++;
+          'text': comment['Comentario'], // Cambio a `Comentario`
+          'fecha': comment['Fecha'].substring(0, 10), // Cambio a `Fecha`
         });
       }
     } catch (e) {
@@ -106,18 +91,12 @@ class _ComentariosSheetState extends State<ComentariosSheet> {
                 enabled: true,
                 child: ListView.builder(
                   controller: scrollController,
-                  itemCount: 5, // Número arbitrario para mostrar las tarjetas de carga
+                  itemCount: 5,
                   itemBuilder: (BuildContext context, int index) {
                     return Column(
                       children: [
                         SizedBox(height: 5.0),
-                        ReviewCard(
-                          '',
-                          '',
-                          '',
-                          '',
-                          '',
-                        ),
+                        ReviewCard('', '', '', '',),
                         SizedBox(height: 10.0),
                       ],
                     );
@@ -135,115 +114,70 @@ class _ComentariosSheetState extends State<ComentariosSheet> {
                     Center(
                       child: Text(
                         'Comentarios',
-                        style: TextStyle(
-                            fontSize: 20.0,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey),
+                        style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold, color: Colors.grey),
                       ),
                     ),
                     SizedBox(height: 10.0),
                     Expanded(
                       child: ListView.builder(
                         controller: scrollController,
-                        itemCount: reviewsList.length + (hasMore ? 1 : 0),
+                        itemCount: reviewsList.length,
                         itemBuilder: (BuildContext context, int index) {
-                          if (index == reviewsList.length) {
-                            return Padding(
-                              padding: EdgeInsets.symmetric(vertical: 16.0),
-                              child: Center(
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    if (hasMore) {
-                                      loadComments(page: currentPage);
-                                    }
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Theme.of(context).colorScheme.tertiary,
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(30.0),
-                                    ),
-                                    padding: EdgeInsets.symmetric(horizontal: 20.0),
-                                  ),
-                                  child: isLoading
-                                      ? CircularProgressIndicator()
-                                      : Text(
-                                          hasMore ? 'Cargar más' : 'No hay más comentarios',
-                                          style: TextStyle(fontSize: 16.0),
-                                        ),
+                          final comentario = reviewsList[index];
+                          return Column(
+                            children: [
+                              SizedBox(height: 5.0),
+                              Dismissible(
+                                key: Key(comentario['comentario_id'].toString()),
+                                direction: comentario['usuario_id'] == widget.userId
+                                    ? DismissDirection.endToStart
+                                    : DismissDirection.none,
+                                background: Container(
+                                  color: Colors.red,
+                                  alignment: Alignment.centerRight,
+                                  padding: EdgeInsets.symmetric(horizontal: 20.0),
+                                  child: Icon(Icons.delete, color: Colors.white),
+                                ),
+                                onDismissed: comentario['usuario_id'] == widget.userId
+                                    ? (direction) async {
+                                        try {
+                                          await apiService.deleteComment(comentario['comentario_id']);
+                                          setState(() {
+                                            reviewsList.removeAt(index);
+                                          });
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text('Comentario eliminado')),
+                                          );
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text('Error al eliminar comentario: $e')),
+                                          );
+                                        }
+                                      }
+                                    : null,
+                                child: ReviewCard(
+                                  comentario['username'] ?? '',
+                                  comentario['img'] ?? '',
+                                  comentario['text'] ?? '',
+                                  comentario['fecha'] ?? '',
                                 ),
                               ),
-                            );
-                          } else {
-                            final comentario = reviewsList[index];
-                            return Column(
-                              children: [
-                                SizedBox(height: 5.0),
-                                Dismissible(
-                                  key: Key(comentario['comentario_id'].toString()),
-                                  direction: comentario['usuario_id'] == widget.userId
-                                      ? DismissDirection.endToStart
-                                      : DismissDirection.none,
-                                  background: Container(
-                                    color: Colors.red,
-                                    alignment: Alignment.centerRight,
-                                    padding: EdgeInsets.symmetric(horizontal: 20.0),
-                                    child: Icon(
-                                      Icons.delete,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  onDismissed: comentario['usuario_id'] == widget.userId
-                                      ? (direction) async {
-                                          try {
-                                            await apiService.deleteComment(comentario['comentario_id']);
-                                            setState(() {
-                                              reviewsList.removeAt(index);
-                                            });
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(content: Text('Comentario eliminado')),
-                                            );
-                                          } catch (e) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(content: Text('Error al eliminar comentario: $e')),
-                                            );
-                                          }
-                                        }
-                                      : null,
-                                  child: ReviewCard(
-                                    comentario['username'] ?? '',
-                                    comentario['img'] ?? '',
-                                    comentario['qualification'].toString(),
-                                    comentario['text'] ?? '',
-                                    comentario['fecha'] ?? '',
-                                  ),
-                                ),
-                                SizedBox(height: 10.0),
-                              ],
-                            );
-                          }
+                              SizedBox(height: 10.0),
+                            ],
+                          );
                         },
                       ),
                     ),
-                    // Campo de texto para enviar un nuevo comentario
                     Padding(
-                      padding: EdgeInsets.only(
-                          bottom: MediaQuery.of(context).viewInsets.bottom),
+                      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(30.0),
                           boxShadow: [
-                            BoxShadow(
-                              color: Colors.black26,
-                              blurRadius: 4,
-                              offset: Offset(2, 2),
-                            ),
+                            BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(2, 2)),
                           ],
-                          border: Border.all(
-                            color: Colors.grey,
-                            width: 1.0,
-                          ),
+                          border: Border.all(color: Colors.grey, width: 1.0),
                         ),
                         child: Row(
                           children: [
@@ -252,31 +186,19 @@ class _ComentariosSheetState extends State<ComentariosSheet> {
                                 padding: const EdgeInsets.only(left: 16.0),
                                 child: TextField(
                                   controller: commentController,
-                                  decoration: InputDecoration(
-                                    hintText: 'Escribe algo...',
-                                    border: InputBorder.none,
-                                  ),
+                                  decoration: InputDecoration(hintText: 'Escribe algo...', border: InputBorder.none),
                                 ),
                               ),
                             ),
                             IconButton(
-                              icon: Icon(
-                                Icons.send,
-                                color: Theme.of(context).colorScheme.tertiary,
-                              ),
+                              icon: Icon(Icons.send, color: Theme.of(context).colorScheme.tertiary),
                               onPressed: () async {
                                 if (commentController.text.isNotEmpty) {
                                   try {
-                                    await apiService.createComment(
-                                        widget.eventoId,
-                                        widget.userId,
-                                        commentController.text);
-                                    // Recargar los comentarios después de enviar uno nuevo
+                                    await apiService.createComment(widget.eventoId, widget.userId, commentController.text);
                                     setState(() {
-                                      commentsFuture = loadComments(page: 1);
+                                      commentsFuture = loadComments();
                                       reviewsList.clear(); // Limpiar la lista para evitar duplicados
-                                      hasMore = true;
-                                      currentPage = 1;
                                     });
                                     commentController.clear();
                                   } catch (e) {
