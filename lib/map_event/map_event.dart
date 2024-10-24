@@ -54,8 +54,8 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
         return LatLng(20.9421633, -89.6035732);
       case "Maxcanu":
         return LatLng(20.5870974, -90.0170427);
-      case "Centro de Convenciones":
-        return LatLng(21.0328586, -89.6312825);
+      case "Cementerio Municipal, Maxcanú Yucatán":
+        return LatLng(20.581407795908042, -90.01356055406555);
       case "Universidad tecnologica del poniente UTP Maxcanú":
         return LatLng(20.5784501, -90.0107107);
       default:

@@ -19,8 +19,7 @@ class _ProfileEdithState extends State<ProfileEdith> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _contrasenaController = TextEditingController();
-
+  final TextEditingController _lastNameController = TextEditingController();
   ApiServiceProfile apiService = ApiServiceProfile();
   bool _isLoading = true;
 
@@ -54,7 +53,8 @@ class _ProfileEdithState extends State<ProfileEdith> {
         _nameController.text = userData['nombre'];
         _emailController.text = userData['email'];
         _phoneController.text = userData['telefono'];
-        _imageUrl = userData['fotoPerfil']; // Asigna la URL de la imagen existente
+        _imageUrl = userData['fotoPerfil'];
+        _lastNameController.text = userData['last_name'];
         _isLoading = false;
       });
     } catch (e) {
@@ -71,8 +71,8 @@ class _ProfileEdithState extends State<ProfileEdith> {
         'nombre': _nameController.text,
         'email': _emailController.text,
         'telefono': _phoneController.text,
-        'contrasena': _contrasenaController.text,
         'fotoPerfil': _imageUrl,
+        'last_name': _lastNameController.text
       };
       await apiService.updateUserData(updatedData);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -102,7 +102,7 @@ class _ProfileEdithState extends State<ProfileEdith> {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
-    _contrasenaController.dispose();
+    _lastNameController.dispose();
     super.dispose();
   }
 
@@ -112,208 +112,154 @@ class _ProfileEdithState extends State<ProfileEdith> {
       backgroundColor: Colors.white,
       resizeToAvoidBottomInset: false,
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
-          : Stack(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 40),
+                  Stack(
                     children: [
-                      const Spacer(flex: 1),
-                      Center(
-                        child: Stack(
-                          children: [
-                            CircleAvatar(
-                              radius: 80,
-                              backgroundImage: _image == null
-                                  ? _imageUrl == null
-                                      ? AssetImage(_defaultImagePath)
-                                      : _imageUrl!.startsWith('http')
-                                          ? NetworkImage(_imageUrl!)
-                                          : FileImage(File(_imageUrl!))
-                                  : FileImage(_image!) as ImageProvider,
-                            ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: GestureDetector(
-                                onTap: () async {
-                                  await showDialog(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      backgroundColor: Colors.white,
-                                      title: const Center(
-                                          child: Text('Elige una opción')),
-                                      content: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          ElevatedButton(
-                                            onPressed: () {
-                                              _pickImage(ImageSource.gallery);
-                                              Navigator.of(context).pop();
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Theme.of(context)
-                                                  .colorScheme
-                                                  .tertiary,
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 40,
-                                                      vertical: 8),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                              ), // Color del botón
-                                            ),
-                                            child: const Text(
-                                              'Selecciona una imagen',
-                                              style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 15.0),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 20),
-                                          ElevatedButton(
-                                            onPressed: () {
-                                              _pickImage(ImageSource.camera);
-                                              Navigator.of(context).pop();
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Theme.of(context)
-                                                  .colorScheme
-                                                  .tertiary,
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 40,
-                                                      vertical: 8),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                              ), // Color del botón
-                                            ),
-                                            child: const Text(
-                                              'Tomar foto',
-                                              style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 15.0),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.camera_alt,
-                                    color: Colors.grey,
-                                    size: 30,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                      CircleAvatar(
+                        radius: 80,
+                        backgroundImage: _image == null
+                            ? _imageUrl == null
+                                ? AssetImage(_defaultImagePath)
+                                : _imageUrl!.startsWith('http')
+                                    ? NetworkImage(_imageUrl!)
+                                    : FileImage(File(_imageUrl!))
+                            : FileImage(_image!) as ImageProvider,
                       ),
-                      const SizedBox(height: 35),
-                      _buildProfileTextField(
-                          Icons.person, 'Eider Pool', _nameController),
-                      const SizedBox(height: 20),
-                      _buildProfileTextField(
-                          Icons.email, 'John@gmail.com', _emailController),
-                      const SizedBox(height: 20),
-                      _buildProfileTextField(
-                          Icons.phone, '+52(999)929737', _phoneController),
-                      const SizedBox(height: 20),
-                      _buildProfileTextField(Icons.lock, '*************', _contrasenaController,
-                          obscureText: false),
-                      const Spacer(flex: 3),
-                    ],
-                  ),
-                ),
-                Positioned(
-                  bottom: 70.0,
-                  left: 16.0,
-                  right: 16.0,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Theme.of(context).colorScheme.tertiary,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 55, vertical: 15),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: GestureDetector(
+                          onTap: () => _showImagePickerDialog(),
+                          child: const CircleAvatar(
+                            radius: 24,
+                            backgroundColor: Colors.white,
+                            child: Icon(Icons.camera_alt, color: Colors.grey),
                           ),
                         ),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => ProfileHome()),
-                          );
-                        },
-                        child: const Text('Cancelar',
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 16)),
-                      ),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Theme.of(context).colorScheme.tertiary,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 55, vertical: 15),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        onPressed: _updateProfile,
-                        child: const Text('Guardar',
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 16)),
                       ),
                     ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 35),
+                  _buildProfileTextField(
+                    icon: Icons.person,
+                    hintText: 'Name',
+                    controller: _nameController,
+                  ),
+                  const SizedBox(height: 20),
+                  _buildProfileTextField(
+                    icon: Icons.person,
+                    hintText: 'Last Name',
+                    controller: _lastNameController,
+                  ),
+                  const SizedBox(height: 20),
+                  _buildProfileTextField(
+                    icon: Icons.phone,
+                    hintText: '+52(999)929737',
+                    controller: _phoneController,
+                  ),
+                  const SizedBox(height: 40),
+                  _buildActionButtons(),
+                ],
+              ),
             ),
     );
   }
 
-  Widget _buildProfileTextField(
-      IconData icon, String hintText, TextEditingController? controller,
-      {bool obscureText = false}) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(2.0),
-          child: Icon(icon, color: Colors.grey),
+  Widget _buildProfileTextField({
+    required IconData icon,
+    required String hintText,
+    required TextEditingController controller,
+    bool obscureText = false,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: obscureText,
+      textAlign: TextAlign.left,
+      style: const TextStyle(color: Colors.black),
+      decoration: InputDecoration(
+        prefixIcon: Icon(icon, color: const Color(0xFFB5B5B5)),
+        hintText: hintText,
+        hintStyle: const TextStyle(color: Colors.black54),
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Color(0xFFD2D2D2)),
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: TextField(
-            controller: controller,
-            obscureText: obscureText,
-            textAlign: TextAlign.center,
-            decoration: InputDecoration(
-              hintText: hintText,
-              filled: true,
-              fillColor: Colors.grey.shade200,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: const EdgeInsets.symmetric(vertical: 20),
-            ),
-          ),
+        contentPadding: const EdgeInsets.symmetric(vertical: 20),
+      ),
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 30),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildButton('Cancelar', () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => ProfileHome()),
+            );
+          }),
+          _buildButton('Guardar', _updateProfile),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildButton(String text, VoidCallback onPressed) {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Theme.of(context).colorScheme.tertiary,
+        padding: const EdgeInsets.symmetric(horizontal: 55, vertical: 15),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      onPressed: onPressed,
+      child:
+          Text(text, style: const TextStyle(color: Colors.white, fontSize: 16)),
+    );
+  }
+
+  void _showImagePickerDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Center(child: Text('Elige una opción')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildDialogButton('Selecciona una imagen', () {
+              _pickImage(ImageSource.gallery);
+              Navigator.pop(context);
+            }),
+            const SizedBox(height: 10),
+            _buildDialogButton('Tomar foto', () {
+              _pickImage(ImageSource.camera);
+              Navigator.pop(context);
+            }),
+          ],
         ),
-      ],
+      ),
+    );
+  }
+
+  Widget _buildDialogButton(String text, VoidCallback onPressed) {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Theme.of(context).colorScheme.tertiary,
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      onPressed: onPressed,
+      child: Text(text, style: const TextStyle(color: Colors.white)),
     );
   }
 }

@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class ApiServiceEvent {
   String get apiUrl =>
-      "https://api-digitalevent.onrender.com/api/events/get/approved";
+      "https://api-digital.fly.dev/api/events/approved";
   Future<List<dynamic>> fetchEvents() async {
     final response = await http.get(Uri.parse(apiUrl));
     if (response.statusCode == 200) {

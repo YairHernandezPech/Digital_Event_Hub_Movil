@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 class ApiServiceProfile {
   String get apiUrl =>
-      "https://api-digitalevent.onrender.com/api/users/${UserSession().userId}";
+      "https://api-digital.fly.dev/api/users/${UserSession().userId}";
 
   Future<Map<String, dynamic>> fetchUserData() async {
     final response = await http.get(Uri.parse(apiUrl));

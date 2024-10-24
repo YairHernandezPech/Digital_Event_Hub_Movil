@@ -3,13 +3,12 @@ import 'package:flutter/material.dart';
 class ReviewCard extends StatelessWidget {
   final String username;
   final String img;
-  final String qualification;
   final String text;
   final String fecha;
 
   // Constructor
   ReviewCard(
-      this.username, this.img, this.qualification, this.text, this.fecha);
+      this.username, this.img, this.text, this.fecha);
 
   @override
   Widget build(BuildContext context) {
@@ -38,22 +37,6 @@ class ReviewCard extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.star,
-                      color: Theme.of(context).colorScheme.tertiary,
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      qualification,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),
