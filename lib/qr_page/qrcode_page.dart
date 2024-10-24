@@ -12,6 +12,8 @@ import 'package:open_file/open_file.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 class Horario {
   final int horarioId;
   final int eventoId;
@@ -291,9 +293,14 @@ class _QrcodePageState extends State<QrcodePage> {
 
   Future<void> redeemCode(String code) async {
     try {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('jwtToken');
       final response = await http.post(
         Uri.parse('https://api-digital.fly.dev/api/ticket/redeem'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token'
+          },
         body: jsonEncode({
           'evento_id': widget.eventoId, // Enviar el evento ID
           'code': code, // Enviar el código introducido
