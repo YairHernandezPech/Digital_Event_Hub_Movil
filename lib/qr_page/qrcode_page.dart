@@ -726,7 +726,7 @@ class _QrcodePageState extends State<QrcodePage> {
                   width: double.infinity,
                   padding: EdgeInsets.symmetric(vertical: 12),
                   child: Text(
-                    "Procesar Pago",
+                    "Canjear Boleto",
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.white, fontSize: 18),
                   ),

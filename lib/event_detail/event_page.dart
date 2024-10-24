@@ -278,7 +278,7 @@ class _EventPageState extends State<EventPage> with TickerProviderStateMixin {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      "Comprar",
+                      "Canjear Boleto",
                       style: TextStyle(fontSize: 16, color: Colors.white),
                     ),
                     // SizedBox(width: 20),
