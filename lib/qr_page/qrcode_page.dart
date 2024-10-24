@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -35,7 +36,6 @@ class Horario {
   }
 }
 
-
 class QrcodePage extends StatefulWidget {
   final String imageUrl;
   final String eventName;
@@ -63,20 +63,22 @@ class _QrcodePageState extends State<QrcodePage> {
 
   dynamic externalDir = '/storage/emulated/0/Download/Qr_code';
 
-  
-
-   @override
+  @override
   void initState() {
     super.initState();
-    fetchHorarios(widget.eventoId); // Llama a la función para obtener los horarios
+    fetchHorarios(
+        widget.eventoId); // Llama a la función para obtener los horarios
   }
 
- Future<void> fetchHorarios(int eventoId) async {
-    final response = await http.get(Uri.parse('https://api-digital.fly.dev/api/schedule/by-event/$eventoId'));
+  Future<void> fetchHorarios(int eventoId) async {
+    final response = await http.get(Uri.parse(
+        'https://api-digital.fly.dev/api/schedule/by-event/$eventoId'));
 
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
-      horarios = data.map((json) => Horario.fromJson(json)).toList(); // Usa el modelo Horario
+      horarios = data
+          .map((json) => Horario.fromJson(json))
+          .toList(); // Usa el modelo Horario
       setState(() {});
       print("el id de: $eventoId");
     } else {
@@ -92,7 +94,6 @@ class _QrcodePageState extends State<QrcodePage> {
     }
   }
 
-  // Función para guardar el archivo PDF y abrirlo después de la descarga
   Future<void> _captureAndSavePdf() async {
     try {
       // Crear el documento PDF
@@ -110,7 +111,7 @@ class _QrcodePageState extends State<QrcodePage> {
       final byteData = await image.toByteData(format: ImageByteFormat.png);
       final pngBytes = byteData!.buffer.asUint8List();
 
-// Agregar la información al PDF
+      // Agregar la información al PDF
       pdf.addPage(
         pw.Page(
           build: (pw.Context context) {
@@ -152,7 +153,6 @@ class _QrcodePageState extends State<QrcodePage> {
                           borderRadius: pw.BorderRadius.circular(15),
                         ),
                         child: pw.Center(
-                          // Centrar el QR dentro del contenedor
                           child: pw.Padding(
                             padding: const pw.EdgeInsets.all(8),
                             child: pw.Image(
@@ -205,134 +205,271 @@ class _QrcodePageState extends State<QrcodePage> {
       // Abrir el archivo PDF después de guardarlo
       await OpenFile.open(filePath);
 
-      // Mostrar mensaje de éxito
-      const snackBar =
-          SnackBar(content: Text('QR code saved and downloaded as PDF.'));
-      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      // Diálogo de éxito con diseño mejorado
+      AwesomeDialog(
+        context: context,
+        dialogType: DialogType.success,
+        animType: AnimType.scale,
+        title: '¡Éxito!',
+        desc: 'El QR ha sido descargado exitosamente.',
+        autoDismiss: true,
+        dismissOnTouchOutside: false,
+        padding: const EdgeInsets.all(25),
+        dialogBorderRadius: BorderRadius.circular(15),
+        headerAnimationLoop: false,
+        titleTextStyle: const TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+        ),
+        descTextStyle: const TextStyle(
+          fontSize: 18,
+          color: Colors.black54,
+          height: 1.5,
+        ),
+      ).show();
+
+      await Future.delayed(const Duration(seconds: 3));
+      Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
-      const snackBar = SnackBar(content: Text('Something went wrong!!!'));
-      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+
+      // Diálogo de error mejorado
+      AwesomeDialog(
+        context: context,
+        dialogType: DialogType.error,
+        animType: AnimType.scale,
+        title: '¡Error!',
+        desc: 'Ocurrió un problema al descargar el QR.',
+        padding: const EdgeInsets.all(25),
+        dialogBorderRadius: BorderRadius.circular(15),
+        headerAnimationLoop: false,
+        titleTextStyle: const TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: Colors.redAccent,
+        ),
+        descTextStyle: const TextStyle(
+          fontSize: 18,
+          color: Colors.black54,
+          height: 1.5,
+        ),
+      ).show();
     }
   }
 
-   // Función para verificar el código
-Future<String> checkCode(String code) async {
-  try {
-    final response = await http.post(
-      Uri.parse('https://api-digital.fly.dev/api/ticket/check'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'code': code}), // Envía el código introducido
-    );
+  // Función para verificar el código
+  Future<String> checkCode(String code) async {
+    try {
+      final response = await http.post(
+        Uri.parse('https://api-digital.fly.dev/api/ticket/check'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'code': code}), // Envía el código introducido
+      );
 
-    print('Respuesta de verificar código: ${response.statusCode} - ${response.body}'); // Imprimir respuesta
+      print(
+          'Respuesta de verificar código: ${response.statusCode} - ${response.body}');
 
-    if (response.statusCode == 200) {
-      return json.decode(response.body)['message']; // Retorna el mensaje de éxito
-    } else {
-      throw Exception('Código no válido o error en la API');
-    }
-  } catch (e) {
-    // Manejo de errores
-    if (!context.mounted) return 'Error'; // Verifica que el contexto esté montado
+      if (response.statusCode == 200) {
+        return json.decode(response.body)['message'];
+      } else {
+        throw Exception('Código no válido o error en la API');
+      }
+    } catch (e) {
+      // Manejo de errores
+      /*
+    if (!context.mounted) 
+      return 'Error'; // Verifica que el contexto esté montado
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Error al verificar el código: $e')),
     );
-    return 'Error'; // Retorna un mensaje de error
+    */
+      return 'Error'; // Retorna un mensaje de error
+    }
   }
-}
 
-Future<void> redeemCode(String code) async {
-  try {
-    final response = await http.post(
-      Uri.parse('https://api-digital.fly.dev/api/ticket/redeem'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'evento_id': widget.eventoId, // Enviar el evento ID
-        'code': code,                  // Enviar el código introducido
-        'horario_id': selectedHorarioId // Enviar el horario ID
-      }),
-    );
-  print('Respuesta de canjear código: ${response.statusCode} - ${response.body}'); // Imprimir respuesta
+  Future<void> redeemCode(String code) async {
+    try {
+      final response = await http.post(
+        Uri.parse('https://api-digital.fly.dev/api/ticket/redeem'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'evento_id': widget.eventoId, // Enviar el evento ID
+          'code': code, // Enviar el código introducido
+          'horario_id': selectedHorarioId // Enviar el horario ID
+        }),
+      );
+      print(
+          'Respuesta de canjear código: ${response.statusCode} - ${response.body}'); // Imprimir respuesta
 
-    if (response.statusCode == 200) {
-      print('Código canjeado con éxito');
+      if (response.statusCode == 200) {
+        print('Código canjeado con éxito');
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Código canjeado con éxito')),
+        );
+      } else {
+        throw Exception('Error al canjear el código: ${response.body}');
+      }
+    } catch (e) {
+      // Manejo de errores
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Código canjeado con éxito')),
+        SnackBar(content: Text('Error al canjear el código: $e')),
       );
-    } else {
-      throw Exception('Error al canjear el código: ${response.body}');
     }
-  } catch (e) {
-    // Manejo de errores
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error al canjear el código: $e')),
-    );
   }
-}
 
-  void _showDialog() {
-    showDialog(
+  void _showDialog(BuildContext context) {
+    String? errorMessage; // Variable para almacenar el mensaje de error.
+    String data = ""; // Asegúrate de inicializar 'data'.
+
+    AwesomeDialog(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, setState) {
-            return AlertDialog(
-              title: Text("Información de Pago"),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
+      dialogType: DialogType.info,
+      padding: const EdgeInsets.all(16),
+      dialogBackgroundColor: Colors.white,
+      borderSide: BorderSide(
+        color: const Color.fromARGB(255, 229, 226, 235),
+        width: 2,
+      ),
+      body: StatefulBuilder(
+        builder: (BuildContext context, StateSetter setState) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  TextField(
-                     controller: _textController, 
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(),
-                      hintText: 'Ingrese su código promocional',
+                  Icon(Icons.local_offer, color: Colors.deepPurple, size: 40),
+                  const SizedBox(height: 12),
+                  Text(
+                    "Introducir Cupón",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.deepPurple,
                     ),
-                    onChanged: (value) {
-                      setState(() {
-                        data = value;
-                      });
-                    },
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    "Ingrese su código promocional a continuación:",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[700],
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
-              actions: [
-                TextButton(
-                  onPressed: () async {
-                      final String code = _textController.text; // Obtener el código del TextController
-
-                  // Primero verificar el código
-                  String message = await checkCode(code);
-
-                  if (message == 'Error') {
-                    return; // Si hay un error, no hacemos nada más
-                  }
-
-                  // Mostrar el mensaje de verificación en el SnackBar
-                  if (!context.mounted) return; // Verificar si el contexto está montado
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-
-                  // Si el mensaje indica que el cupón es válido, proceder a canjearlo
-                  if (message == "El cupón es válido y puede ser canjeado.") {
-                    await redeemCode(code); // Canjear el código
-                    await _captureAndSavePdf(); // Lógica para capturar y guardar el PDF
-
-                    if (!context.mounted) return; // Verificar si el contexto está montado
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Código canjeado con éxito')));
-
-                    Navigator.pop(context); // Cerrar el diálogo
-                  }
-                  },
-                  child: Text("Canjear"),
+              const SizedBox(height: 20),
+              TextField(
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.deepPurple, width: 2),
+                  ),
+                  hintText: 'Ingrese su código promocional',
+                  fillColor: Colors.grey[200],
+                  filled: true,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
-              ],
-            );
-          },
-        );
-      },
-    );
+                onChanged: (value) {
+                  data = value; // Captura el valor del código ingresado.
+                  setState(() {
+                    errorMessage =
+                        null; // Limpia el mensaje de error al cambiar el texto.
+                  });
+                },
+              ),
+              const SizedBox(height: 10),
+              if (errorMessage !=
+                  null) // Mostrar el mensaje de error si existe.
+                Text(
+                  errorMessage!,
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontSize: 14,
+                  ),
+                ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+                onPressed: () async {
+                  // Validar el código antes de proceder.
+                  String? validationMessage = validateCode(data);
+                  if (validationMessage != null) {
+                    setState(() {
+                      errorMessage =
+                          validationMessage; // Actualizar el mensaje de error.
+                    });
+                    return; // Detener si la validación falla.
+                  }
+
+                  // Verificar el código en el servidor.
+                  String message = await checkCode(data);
+                  if (message == 'Error') {
+                    setState(() {
+                      errorMessage =
+                          'Código inválido o error del servidor.'; // Mensaje de error.
+                    });
+                    return;
+                  } else if (message == 'El cupón ya ha sido canjeado.') {
+                    setState(() {
+                      errorMessage =
+                          'Este cupón ya ha sido canjeado.'; // Mensaje para cupón canjeado.
+                    });
+                    // No cerramos el diálogo, solo mostramos el mensaje.
+                    return;
+                  }
+
+                  // Si el código es válido y puede ser canjeado.
+                  if (message == "El cupón es válido y puede ser canjeado.") {
+                    await redeemCode(data); // Canjear el código.
+                    await _captureAndSavePdf(); // Generar el PDF.
+                    // ScaffoldMessenger.of(context).showSnackBar(
+                    //   const SnackBar(
+                    //       content: Text('Código canjeado con éxito')),
+                    // );
+                    Navigator.of(context).pop();
+                  }
+                },
+                child: const Text(
+                  "Canjear",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    ).show();
+  }
+
+// Función de validación del código
+  String? validateCode(String code) {
+    if (code.isEmpty) {
+      return "El código no puede estar vacío.";
+    }
+    if (code.length < 5) {
+      return "El código debe tener al menos 5 caracteres.";
+    }
+    // Agrega otras validaciones según tus requisitos
+    return null; // Si todo está bien, retorna null
   }
 
   @override
@@ -425,13 +562,15 @@ Future<void> redeemCode(String code) async {
             const SizedBox(height: 15),
             Wrap(
               spacing: 40,
-                runSpacing: 15,
-                alignment: WrapAlignment.center,
-                children: horarios.map((horario) {
-                  String inicio = horario.horaInicio.substring(0, 5); // Puedes formatear aquí
-                  String fin = horario.horaFin.substring(0, 5); // Puedes formatear aquí
-                  return _horarioBox(inicio, fin);
-                }).toList(),
+              runSpacing: 15,
+              alignment: WrapAlignment.center,
+              children: horarios.map((horario) {
+                String inicio =
+                    horario.horaInicio.substring(0, 5); // Puedes formatear aquí
+                String fin =
+                    horario.horaFin.substring(0, 5); // Puedes formatear aquí
+                return _horarioBox(inicio, fin);
+              }).toList(),
             ),
           ],
         ),
@@ -581,7 +720,7 @@ Future<void> redeemCode(String code) async {
               ),
               child: TextButton(
                 onPressed: () {
-                  _showDialog();
+                  _showDialog(context);
                 },
                 child: Container(
                   width: double.infinity,
